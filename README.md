@@ -1,5 +1,5 @@
 
-#Cardan Joint Kinematics & Phase Optimization Tool
+# Cardan Joint Kinematics & Phase Optimization Tool
 
 An interactive Python tool for analyzing and optimizing
 single, double and triple Cardan (Hooke's) joint systems.
