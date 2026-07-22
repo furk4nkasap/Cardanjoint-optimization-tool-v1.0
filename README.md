@@ -16,9 +16,18 @@ The software evaluates angular velocity fluctuations caused by shaft misalignmen
 
 ---
 
-## Figure A – Angular Velocity Ratio & Velocity Ripple
+### Figure A – Angular Velocity Ratio & Velocity Ripple
 
 The figure below compares the angular velocity ratio before and after phase optimization.
+
+The optimization algorithm automatically determines the optimum phase (clocking) angles that minimize velocity ripple. A velocity ripple below **10%** is generally considered an acceptable operating condition for Cardan shaft systems.
+
+In this example, the initial velocity ripple of **15.39%** is reduced to **4.52%** after optimization. To achieve this optimized operating condition, the phase angles should be set to:
+
+- **φ₁ = 90°**
+- **φ₂ = 90°**
+
+Applying these optimized phase angles results in a significantly smoother angular velocity transmission and a substantial reduction in velocity fluctuation.
 
 <p align="center">
   <img src="images/figure-a-velocity-ripple.png" alt="Velocity Ripple Analysis" width="900">
