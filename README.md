@@ -1,38 +1,24 @@
 # Cardan Joint Kinematics & Phase Optimization Tool
 
-🇬🇧 **English version below.**  
-🇹🇷 **Türkçe sürüm aşağıdadır.**
+Interactive Python software for **kinematic analysis, visualization, and phase optimization** of single, double, and triple Cardan (Hooke's) joint systems.
+
+![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
+![Platform](https://img.shields.io/badge/Platform-Google%20Colab-orange.svg)
+![Status](https://img.shields.io/badge/Status-Active-success.svg)
 
 ---
-
-# 🇬🇧 English
 
 ## Overview
 
-**Cardan Joint Kinematics & Phase Optimization Tool** is an interactive Python application developed to analyze, visualize, and optimize the kinematic behavior of single, double, and triple Cardan (Hooke's) joint systems.
+Cardan Joint Kinematics & Phase Optimization Tool is an interactive Python application developed to analyze, visualize, and optimize the kinematic behavior of single, double, and triple Cardan (Hooke's) joint systems.
 
-The application evaluates angular velocity fluctuations caused by shaft misalignment and automatically determines the phase (clocking) angles that minimize velocity ripple.
-
----
-
-## Features
-
-- Single, Double, and Triple Cardan joint support
-- Angular velocity ratio analysis (ωout / ωin)
-- Automatic phase angle optimization
-- Interactive graphical user interface (GUI)
-- 2D shaft geometry visualization
-- End-view and side-view phase visualization
-- Misalignment angle analysis
-- Velocity ripple minimization
-- Google Colab compatible interface
+The software evaluates angular velocity fluctuations caused by shaft misalignment and automatically determines the optimum phase (clocking) angles that minimize velocity ripple.
 
 ---
-## Results
 
-### Figure A – Angular Velocity Ratio and Velocity Ripple
+## Figure A – Angular Velocity Ratio & Velocity Ripple
 
-The figure below compares the angular velocity ratio before and after phase optimization. The optimized configuration significantly reduces velocity ripple caused by shaft misalignment.
+The figure below compares the angular velocity ratio before and after phase optimization.
 
 <p align="center">
   <img src="images/figure-a-velocity-ripple.png" alt="Velocity Ripple Analysis" width="900">
@@ -40,33 +26,50 @@ The figure below compares the angular velocity ratio before and after phase opti
 
 ---
 
-### Interactive User Interface
+## Features
 
-The application provides an interactive graphical user interface for configuring the Cardan system, adjusting misalignment angles, selecting the number of joints, and running phase optimization.
+- ✅ Single Cardan joint analysis
+- ✅ Double Cardan joint analysis
+- ✅ Triple Cardan joint analysis
+- ✅ Automatic phase optimization
+- ✅ Angular velocity ratio analysis (ωout / ωin)
+- ✅ Velocity ripple evaluation
+- ✅ Interactive graphical user interface (GUI)
+- ✅ 2D shaft geometry visualization
+- ✅ End-view and side-view phase visualization
+- ✅ Misalignment angle analysis
+- ✅ Google Colab compatible
+
+---
+
+## Interactive User Interface
+
+The application provides an intuitive graphical interface for selecting the system type, defining shaft misalignment angles, adjusting phase angles, and performing automatic optimization.
 
 <p align="center">
-  <img src="images/interface.png" alt="Interactive User Interface" width="450">
+  <img src="images/interface.png" alt="User Interface" width="450">
 </p>
 
 ---
 
-### Figure B – 2D Shaft Geometry
+## Figure B – 2D Shaft Geometry
 
-The 2D geometry view illustrates the shaft configuration and the misalignment angles (β) between consecutive shafts.
+The geometry window illustrates the shaft configuration and the relative misalignment angles between consecutive shafts.
 
 <p align="center">
-  <img src="images/geometry.png" alt="2D Shaft Geometry" width="350">
+  <img src="images/geometry.png" alt="2D Geometry" width="350">
 </p>
 
 ---
 
-### Figure C – Phase (Clocking) Visualization
+## Figure C – Phase (Clocking) Visualization
 
-The phase visualization presents the optimized clocking angles between adjacent Cardan joints using both end-view and side-view representations.
+The phase visualization displays the optimized clocking angles between adjacent Cardan joints using both end-view and side-view representations.
 
 <p align="center">
   <img src="images/phase-visualization.png" alt="Phase Visualization" width="900">
 </p>
+
 ---
 
 ## Run in Google Colab
@@ -75,30 +78,75 @@ The phase visualization presents the optimized clocking angles between adjacent 
 
 ---
 
-# 🇹🇷 Türkçe
+## Installation
 
-## Genel Bakış
+Clone the repository
 
-**Cardan Joint Kinematics & Phase Optimization Tool**, tekli, çiftli ve üçlü Cardan (Hooke) mafsal sistemlerinin kinematik davranışını analiz etmek, görselleştirmek ve optimize etmek amacıyla geliştirilmiş etkileşimli bir Python uygulamasıdır.
+```bash
+git clone https://github.com/furk4nkasap/Cardanjoint-optimization-tool-v1.0.git
+```
 
-Uygulama, şaft hizasızlığından kaynaklanan açısal hız dalgalanmalarını analiz eder ve bu dalgalanmaları en aza indiren optimum faz (clocking) açılarını otomatik olarak belirler.
+Install the required packages
 
----
+```bash
+pip install -r requirements.txt
+```
 
-## Özellikler
-
-- Tekli, çiftli ve üçlü Cardan mafsal desteği
-- Açısal hız oranı analizi (ωout / ωin)
-- Otomatik faz açısı optimizasyonu
-- Etkileşimli grafiksel kullanıcı arayüzü (GUI)
-- 2B şaft geometrisi görselleştirmesi
-- Faz açılarının End View ve Side View gösterimi
-- Hizasızlık (misalignment) açısı analizi
-- Hız dalgalanmasının (velocity ripple) azaltılması
-- Google Colab uyumlu arayüz
+Launch the notebook using **Jupyter Notebook** or **Google Colab**.
 
 ---
 
-## Google Colab'da Çalıştır
+## Theory
 
-[![Google Colab'da Aç](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1NyxubyRDLaJGNz_JJNoXK1A_juKGQTf5?usp=sharing)
+This software implements the kinematic equations of Hooke's universal joints to evaluate:
+
+- Angular velocity ratio
+- Velocity ripple
+- Shaft misalignment effects
+- Phase (clocking) optimization
+
+The application supports single, double, and triple Cardan shaft configurations and provides interactive visualization of the corresponding kinematic behavior.
+
+---
+
+## Project Structure
+
+```text
+Cardanjoint-optimization-tool-v1.0
+│
+├── images/
+│   ├── figure-a-velocity-ripple.png
+│   ├── interface.png
+│   ├── geometry.png
+│   └── phase-visualization.png
+│
+├── CardanJoint_Optimization.ipynb
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## Future Work
+
+Planned improvements include:
+
+- Dynamic analysis
+- Torque transmission analysis
+- Bearing reaction force calculation
+- Torsional vibration analysis
+- Flexible shaft modeling
+- CSV/Excel export
+- Performance optimization
+
+---
+
+## Author
+
+**Furkan Kasap**
+
+Automotive Engineer
+
+Kocaeli University
+
+GitHub: https://github.com/furk4nkasap
