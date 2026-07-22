@@ -13,13 +13,13 @@ Interactive Python application for the **kinematic analysis, visualization, and 
 
 The **Cardan Joint Kinematics & Phase Optimization Tool** is an interactive engineering application developed in Python to evaluate the kinematic behavior of single, double, and triple Cardan joint systems.
 
-The application computes the instantaneous angular velocity ratio over one complete input-shaft revolution.
+The application computes the instantaneous angular velocity ratio
 
 ```math
 q_{\mathrm{total}}=\frac{\omega_{\mathrm{out}}}{\omega_{\mathrm{in}}}
 ```
 
-throughout one complete input-shaft revolution.
+over one complete input-shaft revolution.
 
 For double and triple Cardan configurations, the application automatically searches for the phase or clocking angles that minimize angular velocity unevenness.
 
