@@ -55,9 +55,9 @@ The unevenness metric is calculated as:
 
 where:
 
-- \(q_{\max}\) is the maximum instantaneous angular velocity ratio.
-- \(q_{\min}\) is the minimum instantaneous angular velocity ratio.
-- \(\bar{q}\) is the mean angular velocity ratio over one complete revolution.
+- $q_{\max}$ is the maximum instantaneous angular velocity ratio.
+- $q_{\min}$ is the minimum instantaneous angular velocity ratio.
+- $\bar{q}$ is the mean angular velocity ratio over one complete revolution.
 
 The current software classifies an unevenness value of **5% or lower** as `OK`. Values above this limit are displayed as `Warning`.
 
@@ -104,7 +104,6 @@ The optimum phase angles are computed automatically for every user-defined Carda
 - End-view phase visualization
 - Side-view yoke visualization
 - Interactive Streamlit web application
-- Turkish and English user guidance
 
 ---
 
@@ -284,9 +283,9 @@ opt step = 5°
 the optimizer evaluates:
 
 ```text
-0°, 5°, 10°, 15°, ..., 355°, 360°
+0°, 5°, 10°, 15°, ..., 350°, 355°
 ```
-
+The value `360°` is not evaluated separately because it is kinematically equivalent to `0°`.
 Therefore, a true optimum located between two scan points may be approximated by the closest evaluated value.
 
 ---
@@ -316,15 +315,16 @@ For each candidate combination of `φ₁` and `φ₂`:
 The search interval is:
 
 ```text
-0° to 360°
+0° ≤ φ < 360°
 ```
 
 The computational cost increases significantly for the triple Cardan configuration because every `φ₁` value is evaluated together with every `φ₂` value.
 
 For an optimization step \(s\), the approximate number of phase combinations is:
 
+
 ```math
-N=\left(\frac{360}{s}+1\right)^2
+N=\left(\frac{360}{s}\right)^2
 ```
 
 for a triple Cardan system.
@@ -351,7 +351,7 @@ The angular position relation is:
 ```math
 \tan\theta_{\mathrm{out}}
 =
-\tan\theta_{\mathrm{in}}\cos\beta
+\frac{\tan\theta_{\mathrm{in}}}{\cos\beta}
 ```
 
 For multiple Cardan joints, the output angle of one joint is propagated as the input angle of the next joint after applying the relevant phase angle.
@@ -423,13 +423,14 @@ The side-view figure is a schematic representation intended to clarify phase ori
 1. Open the Streamlit application.
 2. Select the desired Cardan configuration.
 3. Enter the shaft misalignment angles.
-4. Enter the phase angles.
+4. Enter the current phase angles.
 5. Select the optimization step.
 6. Click **Run analysis**.
-7. Review the current and optimized velocity ratio curves.
-8. Review the optimized phase values.
-9. Inspect the shaft geometry visualization.
-10. Inspect the phase visualization.
+7. Review the current and optimized velocity-ratio curves.
+8. Read the optimum phase values from the analysis summary.
+9. Enter the optimum phase values into the `φ₁` and `φ₂` sliders.
+10. Click **Run analysis** again to visualize the optimized phase configuration.
+11. Inspect the shaft geometry and phase-visualization figures.
 
 ---
 
