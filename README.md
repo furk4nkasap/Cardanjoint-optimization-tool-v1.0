@@ -32,12 +32,41 @@ The application evaluates angular velocity fluctuations caused by shaft misalign
 
 ### Figure A – Angular Velocity Ratio and Velocity Ripple
 
-The following figure shows the variation of the total angular velocity ratio throughout one input shaft revolution. The optimized phase angles reduce the velocity fluctuation caused by shaft misalignment.
+The figure below compares the angular velocity ratio before and after phase optimization. The optimized configuration significantly reduces velocity ripple caused by shaft misalignment.
 
 <p align="center">
-  <img src="images/figure-a-velocity-ripple.png" alt="Figure A - Velocity Ripple Analysis" width="900">
+  <img src="images/figure-a-velocity-ripple.png" alt="Velocity Ripple Analysis" width="900">
 </p>
 
+---
+
+### Interactive User Interface
+
+The application provides an interactive graphical user interface for configuring the Cardan system, adjusting misalignment angles, selecting the number of joints, and running phase optimization.
+
+<p align="center">
+  <img src="images/interface.png" alt="Interactive User Interface" width="450">
+</p>
+
+---
+
+### Figure B – 2D Shaft Geometry
+
+The 2D geometry view illustrates the shaft configuration and the misalignment angles (β) between consecutive shafts.
+
+<p align="center">
+  <img src="images/geometry.png" alt="2D Shaft Geometry" width="350">
+</p>
+
+---
+
+### Figure C – Phase (Clocking) Visualization
+
+The phase visualization presents the optimized clocking angles between adjacent Cardan joints using both end-view and side-view representations.
+
+<p align="center">
+  <img src="images/phase-visualization.png" alt="Phase Visualization" width="900">
+</p>
 ---
 
 ## Run in Google Colab
