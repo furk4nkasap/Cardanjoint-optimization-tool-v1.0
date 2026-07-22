@@ -322,7 +322,6 @@ The computational cost increases significantly for the triple Cardan configurati
 
 For an optimization step \(s\), the approximate number of phase combinations is:
 
-
 ```math
 N=\left(\frac{360}{s}\right)^2
 ```
