@@ -13,11 +13,11 @@ Interactive Python application for the **kinematic analysis, visualization, and 
 
 The **Cardan Joint Kinematics & Phase Optimization Tool** is an interactive engineering application developed in Python to evaluate the kinematic behavior of single, double, and triple Cardan joint systems.
 
-The application calculates the instantaneous angular velocity ratio
+The application computes the instantaneous angular velocity ratio over one complete input-shaft revolution.
 
-\[
-q_{total}=\frac{\omega_{out}}{\omega_{in}}
-\]
+```math
+q_{\mathrm{total}}=\frac{\omega_{\mathrm{out}}}{\omega_{\mathrm{in}}}
+```
 
 throughout one complete input-shaft revolution.
 
@@ -48,16 +48,16 @@ The following figure compares the angular velocity ratio of the current configur
 
 The unevenness metric is calculated as:
 
-\[
-\text{Unevenness}=
-100\frac{q_{max}-q_{min}}{\bar{q}}
-\]
+```math
+\mathrm{Unevenness}(\%)=
+100\frac{q_{\max}-q_{\min}}{\bar{q}}
+```
 
 where:
 
-- \(q_{max}\) is the maximum angular velocity ratio,
-- \(q_{min}\) is the minimum angular velocity ratio,
-- \(\bar{q}\) is the mean angular velocity ratio.
+- \(q_{\max}\) is the maximum instantaneous angular velocity ratio.
+- \(q_{\min}\) is the minimum instantaneous angular velocity ratio.
+- \(\bar{q}\) is the mean angular velocity ratio over one complete revolution.
 
 The current software classifies an unevenness value of **5% or lower** as `OK`. Values above this limit are displayed as `Warning`.
 
@@ -83,7 +83,7 @@ For a different shaft geometry or a different set of β angles, the optimum valu
 φ₂ = 25°
 ```
 
-The application recalculates the optimum phase combination automatically for every selected configuration.
+The optimum phase angles are computed automatically for every user-defined Cardan configuration, shaft geometry, and misalignment-angle combination. Consequently, different system configurations generally produce different optimum phase-angle values.
 
 ---
 
@@ -139,11 +139,11 @@ The software propagates the angular position through the first joint, applies th
 
 The total ratio is:
 
-\[
-q_{total}=q_1q_2
-\]
+```math
+q_{\mathrm{total}}=q_1\,q_2
+```
 
-The optimizer scans `φ₁` and selects the value that produces the minimum unevenness.
+The optimizer performs a brute-force search over the specified phase-angle range and returns the phase angle that minimizes the angular velocity unevenness.
 
 ---
 
@@ -165,11 +165,11 @@ The angular position is propagated sequentially through all three joints.
 
 The total ratio is:
 
-\[
-q_{total}=q_1q_2q_3
-\]
+```math
+q_{\mathrm{total}}=q_1\,q_2\,q_3
+```
 
-The optimizer scans combinations of `φ₁` and `φ₂` and selects the combination with the minimum unevenness.
+The optimizer evaluates every combination of `φ₁` and `φ₂` within the selected search resolution and returns the phase-angle combination that minimizes the angular velocity unevenness.
 
 ---
 
@@ -311,9 +311,9 @@ The computational cost increases significantly for the triple Cardan configurati
 
 For an optimization step \(s\), the approximate number of phase combinations is:
 
-\[
+```math
 N=\left(\frac{360}{s}+1\right)^2
-\]
+```
 
 for a triple Cardan system.
 
@@ -323,13 +323,10 @@ for a triple Cardan system.
 
 For a single Hooke's universal joint, the instantaneous angular velocity ratio is calculated using:
 
-\[
-q=
-\frac{\omega_{out}}{\omega_{in}}
-=
-\frac{\cos\beta}
-{1-\sin^2\beta\cos^2\theta}
-\]
+```math
+q=\frac{\omega_{\mathrm{out}}}{\omega_{\mathrm{in}}}
+=\frac{\cos\beta}{1-\sin^{2}\beta\,\cos^{2}\theta}
+```
 
 where:
 
@@ -339,11 +336,11 @@ where:
 
 The angular position relation is:
 
-\[
-\tan\theta_{out}
+```math
+\tan\theta_{\mathrm{out}}
 =
-\tan\theta_{in}\cos\beta
-\]
+\tan\theta_{\mathrm{in}}\cos\beta
+```
 
 For multiple Cardan joints, the output angle of one joint is propagated as the input angle of the next joint after applying the relevant phase angle.
 
@@ -574,6 +571,6 @@ GitHub: [furk4nkasap](https://github.com/furk4nkasap)
 
 ## License
 
-This project can be distributed under the MIT License.
+This project is distributed under the **MIT License**.
 
-Add a `LICENSE` file to the repository before displaying an MIT License badge or formally publishing the project under that license.
+See the [LICENSE](LICENSE) file for details.
