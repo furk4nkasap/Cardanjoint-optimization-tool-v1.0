@@ -104,7 +104,6 @@ The optimum phase angles are computed automatically for every user-defined Carda
 - End-view phase visualization
 - Side-view yoke visualization
 - Interactive Streamlit web application
-- Turkish and English user guidance
 
 ---
 
