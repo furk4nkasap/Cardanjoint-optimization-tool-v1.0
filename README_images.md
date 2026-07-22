@@ -55,9 +55,9 @@ The unevenness metric is calculated as:
 
 where:
 
-- \(q_{\max}\) is the maximum instantaneous angular velocity ratio.
-- \(q_{\min}\) is the minimum instantaneous angular velocity ratio.
-- \(\bar{q}\) is the mean angular velocity ratio over one complete revolution.
+- $q_{\max}$ is the maximum instantaneous angular velocity ratio.
+- $q_{\min}$ is the minimum instantaneous angular velocity ratio.
+- $\bar{q}$ is the mean angular velocity ratio over one complete revolution.
 
 The current software classifies an unevenness value of **5% or lower** as `OK`. Values above this limit are displayed as `Warning`.
 
