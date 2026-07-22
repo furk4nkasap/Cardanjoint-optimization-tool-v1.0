@@ -1,24 +1,64 @@
-
 # Cardan Joint Kinematics & Phase Optimization Tool
 
-An interactive Python tool for analyzing and optimizing
-single, double and triple Cardan (Hooke's) joint systems.
+🇬🇧 English version below.  
+🇹🇷 Türkçe sürüm aşağıdadır.
 
-Features
-• Single / Double / Triple Cardan support
+---
 
-• Angular velocity ratio analysis (ωout/ωin)
+# 🇬🇧 English
 
-• Automatic phase optimization
+## Overview
 
-• Interactive visualization
+Cardan Joint Kinematics & Phase Optimization Tool is an interactive Python application developed to analyze, visualize, and optimize the kinematic behavior of single, double, and triple Cardan (Hooke's) joint systems.
 
-• Misalignment angle analysis
+The application evaluates angular velocity fluctuations caused by shaft misalignment and automatically determines the phase (clocking) angles that minimize velocity ripple.
 
-• Ripple minimization
+---
 
+## Features
+
+- Single, Double and Triple Cardan joint support
+- Angular velocity ratio analysis (ωout / ωin)
+- Automatic phase angle optimization
+- Interactive graphical user interface (GUI)
+- 2D shaft geometry visualization
+- End-view and side-view phase visualization
+- Misalignment angle analysis
+- Velocity ripple minimization
+- Google Colab compatible interface
+
+---
 
 ## Run in Google Colab
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](
-https://colab.research.google.com/github/furk4nkasap/Cardan-optimization-tool/blob/main/CardanJoint_Optimization.ipynb
-)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/furk4nkasap/Cardan-optimization-tool/blob/main/CardanJoint_Optimization.ipynb)
+
+---
+
+# 🇹🇷 Türkçe
+
+## Genel Bakış
+
+Cardan Joint Kinematics & Phase Optimization Tool, tekli, çiftli ve üçlü Cardan (Hooke) mafsal sistemlerinin kinematik davranışını analiz etmek, görselleştirmek ve optimize etmek amacıyla geliştirilmiş etkileşimli bir Python uygulamasıdır.
+
+Uygulama, şaft hizasızlığından kaynaklanan açısal hız dalgalanmalarını analiz eder ve bu dalgalanmaları en aza indiren optimum faz (clocking) açılarını otomatik olarak belirler.
+
+---
+
+## Özellikler
+
+- Tekli, çiftli ve üçlü Cardan mafsal desteği
+- Açısal hız oranı analizi (ωout / ωin)
+- Otomatik faz açısı optimizasyonu
+- Etkileşimli grafiksel kullanıcı arayüzü (GUI)
+- 2B şaft geometrisi görselleştirmesi
+- Faz açılarının End View ve Side View gösterimi
+- Hizasızlık (misalignment) açısı analizi
+- Hız dalgalanmasının (velocity ripple) azaltılması
+- Google Colab uyumlu arayüz
+
+---
+
+## Google Colab'da Çalıştır
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/furk4nkasap/Cardan-optimization-tool/blob/main/CardanJoint_Optimization.ipynb)
