@@ -3,7 +3,7 @@
 Interactive Python application for the **kinematic analysis, visualization, and phase optimization** of single, double, and triple Cardan (Hooke's universal joint) systems.
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue.svg)
-![Platform](https://img.shields.io/badge/Platform-Jupyter%20%7C%20Google%20Colab-orange.svg)
+![Platform](https://img.shields.io/badge/Platform-Streamlit-success.svg)
 ![Analysis](https://img.shields.io/badge/Analysis-Kinematics-success.svg)
 ![Status](https://img.shields.io/badge/Status-Active-success.svg)
 
@@ -30,7 +30,7 @@ The tool also provides:
 - Two-dimensional shaft geometry visualization
 - Misalignment-angle visualization
 - End-view and side-view phase representations
-- An interactive Jupyter/Google Colab interface
+- An interactive Streamlit web interface
 
 > This project performs a **kinematic analysis**. Mass, inertia, torque, bearing loads, elasticity, and dynamic forces are not included in the current version.
 
@@ -98,12 +98,12 @@ The optimum phase angles are computed automatically for every user-defined Carda
 - Velocity unevenness calculation
 - Automatic phase-angle optimization
 - Adjustable optimization step size
-- Interactive parameter control using `ipywidgets`
+- Interactive parameter control using Streamlit widgets
 - Two-dimensional shaft geometry visualization
 - Misalignment-angle visualization
 - End-view phase visualization
 - Side-view yoke visualization
-- Google Colab and Jupyter Notebook compatibility
+- Interactive Streamlit web application
 - Turkish and English user guidance
 
 ---
@@ -408,22 +408,22 @@ The side-view figure is a schematic representation intended to clarify phase ori
 
 ## How to Use
 
-1. Open the notebook in Google Colab or Jupyter Notebook.
-2. Run all cells.
-3. Select the Cardan configuration.
-4. Enter the shaft misalignment angles.
-5. Enter the current phase angles.
-6. Select the optimization step.
-7. Review the current and optimized curves in Figure A.
-8. Read the optimized phase values from the information box.
-9. Enter the optimized phase values into the `φ₁` and `φ₂` controls to visualize the optimized joint orientation.
-10. Review the shaft geometry and phase diagrams.
+1. Open the Streamlit application.
+2. Select the desired Cardan configuration.
+3. Enter the shaft misalignment angles.
+4. Enter the phase angles.
+5. Select the optimization step.
+6. Click **Run analysis**.
+7. Review the current and optimized velocity ratio curves.
+8. Review the optimized phase values.
+9. Inspect the shaft geometry visualization.
+10. Inspect the phase visualization.
 
 ---
 
-## Run in Google Colab
+## Run in Streamlit
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1NyxubyRDLaJGNz_JJNoXK1A_juKGQTf5?usp=sharing)
+[![Open Interactive Application](https://img.shields.io/badge/Open-Interactive%20Application-success)](https://cardanjoint-optimization-tool-v10-y4tdutpuvokj2u2m8sqfee.streamlit.app/)
 
 ---
 
@@ -434,7 +434,6 @@ Clone the repository:
 ```bash
 git clone https://github.com/furk4nkasap/Cardanjoint-optimization-tool-v1.0.git
 ```
-
 Enter the project directory:
 
 ```bash
@@ -444,58 +443,40 @@ cd Cardanjoint-optimization-tool-v1.0
 Install the required packages:
 
 ```bash
-pip install numpy matplotlib ipywidgets
-```
-
-Alternatively, when a `requirements.txt` file is available:
-
-```bash
 pip install -r requirements.txt
 ```
 
-Start Jupyter Notebook:
+Start the Streamlit application:
 
 ```bash
-jupyter notebook
+streamlit run streamlit_app.py
 ```
 
-Then open the project notebook and run all cells.
+The application will open automatically in your default web browser. If it does not, open the local URL displayed in the terminal (typically `http://localhost:8501`).
 
 ---
 
 ## Requirements
 
-The application uses the following Python libraries:
-
 ```text
+streamlit
 numpy
 matplotlib
-ipywidgets
 ```
-
-Recommended `requirements.txt` content:
-
-```text
-numpy
-matplotlib
-ipywidgets
-notebook
-```
-
----
 
 ## Project Structure
 
 ```text
 Cardanjoint-optimization-tool-v1.0/
-│
+
 ├── images/
 │   ├── figure-a-velocity-ripple.png
 │   ├── interface.png
 │   ├── geometry.png
 │   └── phase-visualization.png
 │
-├── CardanJoint_Optimization.ipynb
+├── cardan_core.py
+├── streamlit_app.py
 ├── requirements.txt
 ├── LICENSE
 └── README.md
