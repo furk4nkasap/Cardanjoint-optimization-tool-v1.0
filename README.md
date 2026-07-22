@@ -28,6 +28,17 @@ The application evaluates angular velocity fluctuations caused by shaft misalign
 - Google Colab compatible interface
 
 ---
+## Results
+
+### Figure A – Angular Velocity Ratio and Velocity Ripple
+
+The following figure shows the variation of the total angular velocity ratio throughout one input shaft revolution. The optimized phase angles reduce the velocity fluctuation caused by shaft misalignment.
+
+<p align="center">
+  <img src="images/figure-a-velocity-ripple.png" alt="Figure A - Velocity Ripple Analysis" width="900">
+</p>
+
+---
 
 ## Run in Google Colab
 
