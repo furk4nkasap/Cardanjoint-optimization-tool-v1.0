@@ -557,7 +557,6 @@ The software should not be used as the sole basis for production design without 
 
 **Furkan Kasap**  
 Automotive Engineer  
-Kocaeli University
 
 GitHub: [furk4nkasap](https://github.com/furk4nkasap)
 
