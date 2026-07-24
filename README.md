@@ -312,6 +312,63 @@ For each candidate combination of `φ₁` and `φ₂`:
 3. Compare the result with the best previous result.
 4. Retain the phase-angle combination with the lowest unevenness.
 
+### Optimization Objective
+
+The optimization process searches for the phase-angle configuration
+that minimizes the total angular velocity unevenness over one complete
+input-shaft revolution.
+
+For a double Cardan system, the optimum phase angle is defined as:
+
+```math
+\phi_1^*
+=
+\underset{\phi_1}{\operatorname{argmin}}
+\left[
+100\frac{
+q_{\max}(\phi_1)-q_{\min}(\phi_1)
+}{
+\bar{q}(\phi_1)
+}
+\right]
+```
+
+For a triple Cardan system, the optimum phase-angle combination is
+defined as:
+
+```math
+(\phi_1^*,\phi_2^*)
+=
+\underset{\phi_1,\phi_2}{\operatorname{argmin}}
+\left[
+100\frac{
+q_{\max}(\phi_1,\phi_2)-q_{\min}(\phi_1,\phi_2)
+}{
+\bar{q}(\phi_1,\phi_2)
+}
+\right]
+```
+
+This relationship can be summarized as:
+
+```math
+\phi
+\;\longrightarrow\;
+\theta_{\mathrm{next,in}}
+\;\longrightarrow\;
+q_{\mathrm{next}}
+\;\longrightarrow\;
+q_{\mathrm{total}}
+\;\longrightarrow\;
+\mathrm{Unevenness}
+```
+
+The phase angles are therefore the optimization variables, while the
+misalignment angles \(\beta_i\) remain fixed for each optimization run.
+The current software evaluates discrete phase-angle candidates and
+selects the candidate, or candidate combination, that produces the
+lowest calculated unevenness.
+
 The search interval is:
 
 ```text
@@ -352,10 +409,65 @@ The angular position relation is:
 =
 \frac{\tan\theta_{\mathrm{in}}}{\cos\beta}
 ```
+### Effect of Phase Angle on the Kinematic Model
 
-For multiple Cardan joints, the output angle of one joint is propagated as the input angle of the next joint after applying the relevant phase angle.
+For multiple Cardan-joint systems, the phase or clocking angle changes
+the angular reference applied to the input of the following joint.
 
-This sequential propagation is used for both double and triple Cardan configurations.
+Using the sign convention implemented in the current software, the
+input angle of the second joint is:
+
+```math
+\theta_{2,\mathrm{in}}
+=
+\theta_{1,\mathrm{out}}-\phi_1
+```
+
+For a triple Cardan system, the input angle of the third joint is:
+
+```math
+\theta_{3,\mathrm{in}}
+=
+\theta_{2,\mathrm{out}}-\phi_2
+```
+
+Therefore, the phase angles do not change the shaft misalignment angles
+\(\beta_i\). Instead, they shift the angular position at which the
+velocity fluctuation of each subsequent Cardan joint occurs.
+
+For a double Cardan system:
+
+```math
+q_{\mathrm{total}}(\theta,\phi_1)
+=
+q_1(\theta,\beta_1)
+\,
+q_2(\theta_{1,\mathrm{out}}-\phi_1,\beta_2)
+```
+
+For a triple Cardan system:
+
+```math
+q_{\mathrm{total}}(\theta,\phi_1,\phi_2)
+=
+q_1(\theta,\beta_1)
+\,
+q_2(\theta_{1,\mathrm{out}}-\phi_1,\beta_2)
+\,
+q_3(\theta_{2,\mathrm{out}}-\phi_2,\beta_3)
+```
+
+Changing \(\phi_1\) and \(\phi_2\) shifts the relative angular positions
+of the individual velocity-ratio fluctuations. Depending on the
+selected misalignment angles, these fluctuations may reinforce or
+partially cancel one another.
+
+For example, if two joints reach their maximum velocity ratios at
+approximately the same angular position, their fluctuations may
+reinforce one another. Changing the phase angle shifts the fluctuation
+of the following joint, allowing one joint to partially compensate for
+the acceleration or deceleration produced by another joint. As a
+result, the total output velocity may become more uniform.
 
 ---
 
