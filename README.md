@@ -323,9 +323,10 @@ For a double Cardan system, the optimum phase angle is defined as:
 ```math
 \phi_1^*
 =
-\underset{\phi_1}{\operatorname{argmin}}
+\underset{\phi_1}{\mathrm{arg\,min}}
 \left[
-100\frac{
+100
+\frac{
 q_{\max}(\phi_1)-q_{\min}(\phi_1)
 }{
 \bar{q}(\phi_1)
@@ -339,9 +340,10 @@ defined as:
 ```math
 (\phi_1^*,\phi_2^*)
 =
-\underset{\phi_1,\phi_2}{\operatorname{argmin}}
+\underset{\phi_1,\phi_2}{\mathrm{arg\,min}}
 \left[
-100\frac{
+100
+\frac{
 q_{\max}(\phi_1,\phi_2)-q_{\min}(\phi_1,\phi_2)
 }{
 \bar{q}(\phi_1,\phi_2)
@@ -353,13 +355,13 @@ This relationship can be summarized as:
 
 ```math
 \phi
-\;\longrightarrow\;
+\longrightarrow
 \theta_{\mathrm{next,in}}
-\;\longrightarrow\;
+\longrightarrow
 q_{\mathrm{next}}
-\;\longrightarrow\;
+\longrightarrow
 q_{\mathrm{total}}
-\;\longrightarrow\;
+\longrightarrow
 \mathrm{Unevenness}
 ```
 
