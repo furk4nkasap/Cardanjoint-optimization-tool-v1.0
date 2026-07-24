@@ -360,7 +360,7 @@ compensation problem:
 \longrightarrow
 \min(\mathrm{Unevenness})
 ```
-
+```math
 \phi_1^*
 =
 \underset{\phi_1}{\mathrm{arg\,min}}
