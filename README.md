@@ -29,7 +29,7 @@ consecutive Cardan joints.
 The optimization does not introduce physical damping or dissipate
 energy. Instead, it changes the relative angular positions of the
 periodic velocity fluctuations so that they partially or, under suitable
-geometric conditions, almost completely compensate for one another.
+idealized geometric conditions, strongly compensate for one another.
 The optimum phase configuration is defined as the configuration that
 minimizes the residual output-speed unevenness.
 
@@ -259,6 +259,31 @@ unevenness.
 The amount of compensation depends on the complete shaft geometry,
 misalignment angles, joint arrangement, and phase-angle configuration.
 
+#### Terminology Used in Driveline Literature
+
+In driveline literature, the relative angular orientation of universal-joint
+yokes is commonly discussed using terms such as **yoke phasing**, **shaft
+yoke phasing**, **driveshaft phasing**, **propeller-shaft phase angle**, and
+**relative phase angle**.
+
+The resulting reduction in periodic output-speed variation may be described
+as **velocity-fluctuation compensation** or **velocity-fluctuation
+cancellation**. For double Cardan arrangements, the corresponding ideal
+geometric configuration is commonly associated with the **double Cardan
+constant-velocity condition**.
+
+These terms describe related but different aspects of the system:
+
+- **Yoke phasing** describes the physical angular orientation of the yokes.
+- **Relative phase angle** is the angular variable used to represent that orientation.
+- **Velocity-fluctuation compensation** describes the resulting kinematic effect.
+- **Cancellation error** describes the residual fluctuation remaining after compensation.
+- **Double Cardan constant-velocity condition** describes a special arrangement in which the velocity fluctuation is ideally cancelled.
+
+In this project, the general term **kinematic phase compensation** is used
+to describe the reduction in output-speed unevenness produced by selecting
+appropriate relative phase or clocking angles.
+
 ---
 
 ### Initial Angular Reference — θ₀
@@ -439,6 +464,7 @@ The angular position relation is:
 =
 \frac{\tan\theta_{\mathrm{in}}}{\cos\beta}
 ```
+
 ### Effect of Phase Angle on the Kinematic Model
 
 For multiple Cardan-joint systems, the phase or clocking angle changes
@@ -685,6 +711,15 @@ Planned improvements may include:
 - Integration with multibody dynamics software
 
 ---
+## Terminology Note
+
+The terminology used in this project is consistent with commonly used
+universal-joint and driveline-engineering expressions, including yoke
+phasing, driveshaft phasing, relative phase angle, velocity-fluctuation
+compensation, and the double Cardan constant-velocity condition.
+
+Relevant technical sources should be consulted when applying these concepts
+to production driveline design.
 
 ## Engineering Scope
 
