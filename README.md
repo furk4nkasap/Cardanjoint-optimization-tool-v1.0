@@ -366,7 +366,7 @@ q_{\mathrm{total}}
 ```
 
 The phase angles are therefore the optimization variables, while the
-misalignment angles \(\beta_i\) remain fixed for each optimization run.
+misalignment angles $\beta_i$ remain fixed for each optimization run.
 The current software evaluates discrete phase-angle candidates and
 selects the candidate, or candidate combination, that produces the
 lowest calculated unevenness.
@@ -379,7 +379,7 @@ The search interval is:
 
 The computational cost increases significantly for the triple Cardan configuration because every `φ₁` value is evaluated together with every `φ₂` value.
 
-For an optimization step \(s\), the approximate number of phase combinations is:
+For an optimization step $s$, the approximate number of phase combinations is:
 
 ```math
 N=\left(\frac{360}{s}\right)^2
@@ -400,9 +400,9 @@ q=\frac{\omega_{\mathrm{out}}}{\omega_{\mathrm{in}}}
 
 where:
 
-- \(\beta\) is the shaft misalignment angle,
-- \(\theta\) is the instantaneous input-shaft angle,
-- \(q\) is the instantaneous angular velocity ratio.
+- $\beta$ is the shaft misalignment angle,
+- $\theta$ is the instantaneous input-shaft angle,
+- $q$ is the instantaneous angular velocity ratio.
 
 The angular position relation is:
 
@@ -434,7 +434,7 @@ For a triple Cardan system, the input angle of the third joint is:
 ```
 
 Therefore, the phase angles do not change the shaft misalignment angles
-\(\beta_i\). Instead, they shift the angular position at which the
+$\beta_i$. Instead, they shift the angular position at which the
 velocity fluctuation of each subsequent Cardan joint occurs.
 
 For a double Cardan system:
@@ -459,7 +459,7 @@ q_2(\theta_{1,\mathrm{out}}-\phi_1,\beta_2)
 q_3(\theta_{2,\mathrm{out}}-\phi_2,\beta_3)
 ```
 
-Changing \(\phi_1\) and \(\phi_2\) shifts the relative angular positions
+Changing $\phi_1$ and $\phi_2$ shifts the relative angular positions
 of the individual velocity-ratio fluctuations. Depending on the
 selected misalignment angles, these fluctuations may reinforce or
 partially cancel one another.
