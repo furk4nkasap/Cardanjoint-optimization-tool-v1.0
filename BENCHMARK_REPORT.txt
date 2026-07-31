@@ -1,0 +1,39 @@
+Cardan Joint Engineering Tool v1.2.4 optimizer benchmark
+Parameters: CardanParameters(mode=<CardanMode.TRIPLE: 3>, beta1_deg=43.02, beta2_deg=25.26, beta3_deg=47.51, phi1_deg=0.0, phi2_deg=0.0, theta0_deg=0.0, optimization_step_deg=5.0, phase_convention=<PhaseConvention.PHYSICAL_YOKE_CLOCKING: 'physical_yoke_clocking'>)
+
+Method: grid
+  phi1: 70.000000000 deg
+  phi2: 15.000000000 deg
+  objective unevenness: 0.754052578065 %
+  validated unevenness: 0.754064857892 %
+  function evaluations: 1296
+  solver success/accepted: True
+  measured wall time: 0.009987 s
+
+Method: local_refinement
+  phi1: 68.250000000 deg
+  phi2: 16.500000000 deg
+  objective unevenness: 0.036594486034 %
+  validated unevenness: 0.036594619153 %
+  function evaluations: 2977
+  solver success/accepted: True
+  measured wall time: 0.018819 s
+
+Method: differential_evolution
+  phi1: 68.211041194 deg
+  phi2: 16.518456782 deg
+  objective unevenness: 0.000000000051 %
+  validated unevenness: 0.000000000051 %
+  function evaluations: 3240
+  solver success/accepted: False
+  measured wall time: 0.147035 s
+
+Method: hybrid
+  phi1: 68.211041194 deg
+  phi2: 16.518456782 deg
+  objective unevenness: 0.000000000051 %
+  validated unevenness: 0.000000000051 %
+  function evaluations: 3319
+  solver success/accepted: True
+  measured wall time: 0.149848 s
+

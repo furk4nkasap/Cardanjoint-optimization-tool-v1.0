@@ -1,0 +1,80 @@
+Cardan Joint Engineering Tool v1.2.4
+Final Verification Report
+==============================================
+
+Release contract
+----------------
+Tool version: 1.2.4
+Core API: 8
+Viewer API: 2
+Parameter schema: 2
+Public phase convention: physical_yoke_clocking
+Angle unit: degree
+3D scene model: canonical_planar
+Spatial reconstruction: false
+
+Verification results
+--------------------
+1. Python syntax compilation: PASS
+   - cardan_core.py
+   - cardan_3d_viewer.py
+   - streamlit_app.py
+   - benchmark_optimizers.py
+   - all test modules
+
+2. Automated unittest suite: PASS
+   - 31/31 tests passed
+
+3. Streamlit application smoke test: PASS
+   - English interface path
+   - Turkish interface path
+   - standard automatic analysis
+   - canonical 0.5-degree slider/number state synchronization
+   - localized curve preview
+   - five export downloads
+   - valid seven-sheet XLSX archive
+   - 3D scene JSON export
+
+4. Phase safety tests: PASS
+   - 0° physical phase -> aligned yokes
+   - 90° physical phase -> perpendicular yokes
+   - 30° and 60° intermediate physical phase measurements
+   - 180° phase equivalence and canonicalization
+   - explicit physical parameter payload round-trip
+   - unlabelled legacy payload rejection
+   - explicit internal Hooke-reference conversion
+   - unknown schema rejection
+
+5. Numerical regression: PASS
+   Input:
+     beta1 = beta2 = beta3 = 9.5°
+     triple Cardan system
+     standard local-refinement analysis
+   Result:
+     phi1 = 30.000000000000°
+     phi2 = 30.000000000000°
+     validated unevenness = 0.000131672855774%
+
+6. 3D/scene validation: PASS
+   - single, double, and triple systems
+   - shaft misalignment preservation
+   - yoke orthogonality
+   - unit quaternion norms
+   - quaternion frame continuity
+   - canonical_planar metadata
+   - spatial_reconstruction=false metadata
+
+7. Optimization validation: PASS
+   - deterministic grid
+   - local refinement
+   - Differential Evolution
+   - hybrid DE + Powell
+   - dense validation diagnostics
+   - global optimizer reproducibility with fixed seed
+
+Environment note
+----------------
+The numerical core, Plotly figure generation, JSON export, and XlsxWriter workbook
+creation were executed with their real Python libraries. The complete Streamlit
+page flow was executed with an API-compatible local Streamlit stub because an
+interactive browser session is not available in this test environment.
