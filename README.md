@@ -339,6 +339,31 @@ A numerical preview of the first curve samples is shown directly in the interfac
 ---
 
 # Mathematical Model
+## Notation
+
+| Symbol | Unit | Definition |
+|---|---:|---|
+| $i$ | — | Cardan-joint index |
+| $\theta_{i,\mathrm{in}}$ | deg | Input angle of joint $i$ |
+| $\theta_{i,\mathrm{out}}$ | deg | Output angle of joint $i$ |
+| $\theta_0$ | deg | Initial angular reference of the input shaft |
+| $\beta_i$ | deg | Misalignment angle between the shaft axes connected by joint $i$ |
+| $\phi_i$ | deg | Physical yoke-clocking angle between adjacent joints |
+| $\psi_i$ | deg | Internal Hooke-angle phase reference used by the numerical recurrence |
+| $\omega_{\mathrm{in}}$ | rad/s | Input angular velocity |
+| $\omega_{\mathrm{out}}$ | rad/s | Output angular velocity |
+| $q_i$ | — | Instantaneous angular-velocity ratio of joint $i$ |
+| $q_{\mathrm{total}}$ | — | Product of the active joint velocity ratios |
+| $\bar q$ | — | Mean total velocity ratio over the evaluated angular grid |
+| $q_{\min}$ | — | Minimum total velocity ratio |
+| $q_{\max}$ | — | Maximum total velocity ratio |
+| $U$ | % | Velocity-unevenness objective |
+| $R$ | % | Unevenness reduction after optimization |
+| $s$ | deg | Coarse physical-phase search step |
+| $N_{\mathrm{double}}$ | — | Approximate number of coarse candidates for a double Cardan system |
+| $N_{\mathrm{triple}}$ | — | Approximate number of coarse phase combinations for a triple Cardan system |
+| $N_{\mathrm{sample}}$ | — | Number of angular samples used for objective calculation or validation |
+| $\phi_i^*$ | deg | Selected optimum physical yoke phase |
 
 ## 1. Single Hooke Joint — Output Angle
 
