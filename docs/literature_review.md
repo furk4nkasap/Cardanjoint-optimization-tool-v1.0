@@ -6,7 +6,8 @@
 
 - Arama: İngilizce ve Türkçe web araması (tek mafsal kinematiği, çift mafsal fazlaması, çoklu mafsal zincirleri, düzlemsel olmayan geometri, tolerans/duyarlılık, deneysel doğrulama).
 - Künye doğrulaması: DOI kayıtları Crossref API üzerinden tek tek sorgulandı. Crossref'te bulunamayan tanımlayıcılar "doğrulanamadı" olarak işaretlendi.
-- **Erişim sınırı:** Yalnızca bir makalenin tam metni okunabildi. Diğer kaynaklar için özet veya yalnızca künye mevcuttur. Springer, ASME ve SAE tam metinleri ödeme duvarı arkasındadır; iki patent sayfası ve Tor Vergata arşivindeki iki PDF erişimi reddetti (HTTP 403).
+- **Güncelleme (v1.4.0):** Fischer ve Paul (1991) ile Seherr-Thoss ve diğ. (2006) tam metinleri sonradan sağlandı ve okundu; ayrıntı Bölüm 7'dedir. Aşağıdaki ilk tarama metni o tarihteki erişim durumunu yansıtır.
+- **Erişim sınırı (ilk tarama):** Yalnızca bir makalenin tam metni okunabildi. Diğer kaynaklar için özet veya yalnızca künye mevcuttur. Springer, ASME ve SAE tam metinleri ödeme duvarı arkasındadır; iki patent sayfası ve Tor Vergata arşivindeki iki PDF erişimi reddetti (HTTP 403).
 - Bu nedenle aşağıda **tam metni okunmayan hiçbir kaynaktan denklem, tablo veya sayısal değer aktarılmamıştır.** Özetten alınan ifadeler niteliksel sonuçlardır.
 
 Erişim düzeyi kısaltmaları: **TM** = tam metin okundu, **Ö** = yalnızca özet, **K** = yalnızca künye.
@@ -104,3 +105,68 @@ Projeye eklenen kapalı-form çözüm (zincirin 2×2 doğrusal dönüşüm olara
 ## 6. Kapsam genişletme literatürü (kinematik model dışı)
 
 Tork, yatak yükleri, esneklik, sürtünme, boşluk ve burulma titreşimi çalışmaları ([D2], [D3], [D4], [D8]) mevcut modelin dışındadır. Bu kaynaklar yalnızca özet düzeyinde incelendi ve hiçbir hesap yoluna dayanak yapılmadı.
+
+## 7. Tam metin incelemesi (güncelleme, v1.4.0)
+
+İki kaynağın PDF'i sağlandı (`literat/` klasörü; telif nedeniyle repoya eklenmedi). Erişim düzeyleri **TM** olarak güncellendi.
+
+### 7.1 Fischer ve Paul (1991) — tam metin (s. 263–271)
+
+- **Model (s. 263–264, Şekil 1, Denk. 1–3):** Çift Cardan hattı altı uzuvlu uzaysal mekanizma (RRRRRC) olarak, 3×3 dual sayılı dönüşüm matrisleri ve kapalı çevrim koşuluyla kurulur.
+- **Çözüm (s. 264–266, Denk. 5–22):** İlk konumda Davidon–Fletcher–Powell, sonraki adımlarda Newton–Raphson; adım en çok 20°.
+- **Bağıl faz açısı (s. 268, Denk. 23):** `RPA = (faz açısı) − (burulma açısı)`. Burulma açısı, giriş–ara ve ara–çıkış mil düzlemleri arasındaki açıdır.
+- **Sonuçlar:**
+  - Eşit mafsal açılarında dalgalanma genliği RPA ile artar ve RPA = 90°'de en büyüktür; 45° mafsal açısında sıfırdan yaklaşık 20°'ye çıkar (s. 268, 270; Şekil 7).
+  - Mil ekseni kaçıklığının, verilen bir RPA için giriş–çıkış ilişkisine etkisi ihmal edilebilir (Şekil 8).
+  - Eşit olmayan açılarda sabit hız elde edilemez; genlik RPA = 0'da en küçüktür ve açı farkıyla, ayrıca açıların büyüklüğüyle artar (s. 269, Şekil 9).
+- **Deney (s. 266–267, 270):** Giriş ve çıkış millerinde optik enkoder; eğrilerdeki düzensizlik 0,36° (enkoder çözünürlüğü). 10°/30° açılar, 60° faz, 0,867 in kaçıklık için dört tekrarın standart sapması 0,0323°, genlik yaklaşık 4°. Şekil 11–12'de deney ile hesap yakın uyumludur.
+- **Bu projeyle karşılaştırma:**
+
+| Kaynak değeri | Girdi | Model sonucu | Tolerans |
+|---|---|---|---|
+| "yaklaşık 20°" (s. 268, 270) | β = 45°/45°, RPA = 90° | 19,47° | ±0,6° |
+| 0° | β = 45°/45°, RPA = 0° | 0° | 1e-9 |
+| Şekil 11: düz eğri | β = 30°/30°, faz −20,1° | 0° (burulma = −20,1° çıkarımı) | ±0,5° |
+| Şekil 11: ≈ 2,9° | β = 30°/30°, faz 0° (RPA 20,1°) | 2,84° | ±0,5° |
+| Şekil 12: ≈ 6,4° | faz 30° (RPA 50,1°) | 6,32° | ±0,5° |
+| Şekil 12: ≈ 8,0° | faz 60° (RPA 80,1°) | 8,09° | ±0,5° |
+
+  Şekil değerleri gözle okunmuştur; belirsizlik en az enkoder çözünürlüğü (0,36°) kadardır. Burulma açısı makalede sayısal verilmediği için, −20,1° fazda eğrinin düz olmasından çıkarılmıştır.
+- **Kullanılmayan örnekler:** Şekil 5 (35°/35°, faz 50°) ve 10°/30° deneyi için burulma açısı verilmemiştir; eksik parametre tahmin edilmedi. Bilgi amaçlı: model RPA = 50° için 8,75° verir, Şekil 5'in tepe değeri de bu düzeydedir; 10°/30° için RPA 40°–80° aralığında 4,1°–4,5° verir, ölçülen "yaklaşık 4°" ile uyumludur.
+- **Sınır:** İmalat hatalı durum (Şekil 6, dik olmayan istavroz ve kaçık eksenler) bu projenin ideal modelinin dışındadır.
+
+### 7.2 Seherr-Thoss, Schmelz, Aucktor (2006) — Bölüm 1.2 (s. 5–10) tam metin; 4.2–4.3 ve 5 tarandı
+
+- **Denk. (1.1a), s. 6:** `tan φ₂ = cos β · tan φ₁` — başlangıçta istavroz ekseni mil düzlemine dik ("orthogonal").
+- **Denk. (1.1c), s. 6:** `tan φ₂ = tan φ₁ / cos β` — başlangıçta çatal mil düzleminde ("in-phase"). Bu projenin `hooke_output_angle_rad` işlevi bu biçimdedir.
+- **Denk. (1.2), s. 6:** `ω₂/ω₁ = cos β / (1 − sin²β sin²φ₁)`; uç değerler `cos β` ve `1/cos β`. Bu, (1.1a) başlangıcına aittir; projedeki `cos²θ` biçimi (1.1c) başlangıcının karşılığıdır.
+- **s. 6 ve Şekil 1.7a:** 45° mafsal açısında ileri–geri sapma "yaklaşık ±10°". Model: 9,88°. Şekilden 30° için ≈ 4° (model 4,12°), 15° için ≈ 1° (model 0,99°).
+- **Bölüm 1.2.2, s. 8–9:** Ara mildeki çatallar aynı düzlemdeyse `tan φ₃ = (cos β₁ / cos β₂) · tan φ₁`; `β₂ = ±β₁` için sabit hız (Z ve W düzeni). Çatallar 90° fazdaysa düzgünsüzlük `ω_max = ω_min / (cos β₁ cos β₂)` düzeyine çıkar.
+- **Bölüm 1.2.3, s. 10:** d'Ocagne koşulları (giriş ve çıkış eksenleri kesişir; iki mafsal bir düzleme göre simetriktir) ve Willis'in uzaysal miller için karşıt fazlama sonucu. Bu bölüm fazlanmış uzaysal durumun denklemini türetmez.
+- **s. 302 (Bölüm 5.3.3):** Tarım makinesi kuyruk mili uygulamasında, kusurlu Z düzeninden kaynaklanan düzgünsüz dönme için "genel olarak ±%7 kabul edilebilir". Bu bir uygulama ölçütüdür; projenin %5 eşiği gibi evrensel standart değildir.
+- **Bulunmayanlar:** Kitapta üç veya daha fazla Hooke mafsalının faz eniyilemesi ve bu projedeki 2×2 matris/tekil değer formülasyonu **yer almıyor** (anahtar sözcük taraması ve ilgili bölümlerin okunması). Çift mafsal için `cos β₁ / cos β₂` oranı ise kitapta vardır ve projedeki çift mafsal kapalı-form sonucunun kaynağı olarak gösterilebilir.
+
+### 7.3 Karaoğlan ve Kuralay (2024) — düzeltilmiş eleştiri
+
+- Kitaptaki iki başlangıç tanımıyla karşılaştırınca: makalenin Denk. (1)'i "in-phase" biçimidir (1.1c), Denk. (4)'ü ise "orthogonal" biçimin hız oranıdır (1.2). İkisi aynı açı başlangıcına ait değildir. Metindeki "en büyük hız 0° ve 180°'de" ifadesi Denk. (1) ile, Şekil 5 ise Denk. (4) ile uyumludur. Uç değerler bundan etkilenmez.
+- Şekil 6'daki açı farkı genlikleri (±0,7°, ±0,6°, ±0,5°) makalenin kendi hız oranı aralıklarıyla tutarlı değildir: aynı model 2,11°, 1,85° ve 1,56° verir (yaklaşık üç kat). Nedeni makaleden anlaşılamıyor; bu değerler referans olarak **kullanılmadı**.
+
+### 7.4 Klasördeki ikinci inceleme (`research_checkout/docs/literature_review.md`)
+
+Aynı klasörde, bu çalışmadan bağımsız yürütülmüş ikinci bir inceleme bulunuyor. Fischer–Paul ve Karaoğlan–Kuralay ortak; aşağıdaki yedi kaynak yalnızca orada yer alıyor. Künyeleri Crossref üzerinden doğruladım; **içeriklerini ben okumadım**, erişim düzeyleri o incelemenin beyanıdır.
+
+| Kaynak | Künye (Crossref) | O incelemedeki erişim | Konu |
+|---|---|---|---|
+| An, K., Wang, W. (2017) | Adv. Mech. Eng. 9(5), DOI 10.1177/1687814017707478 | Tam metin | İdeal çift mafsal, gevşeklik ve aşınma |
+| Gao, J., Qi, X. (2023) | Science Progress 106(3), DOI 10.1177/00368504231195495 | Tam metin | Direksiyon sistemi, başlangıç açısı |
+| Karadere, G., Kopmaz, O., Gullu, E. (2010) | Int. J. Mater. Prod. Technol. 39(3/4), 317–, DOI 10.1504/IJMPT.2010.035806 | Özet | İstavroz rijitlik koşulundan türetim |
+| Wu, G., Shi, W., Chen, Z. (2013) | SAE Technical Paper 2013-01-1490, DOI 10.4271/2013-01-1490 | Özet | Çoklu mafsal fazı ve burulma titreşimi |
+| Hummel, S.R., Chassapis, C. (2000) | Mech. Mach. Theory 35(3), 463–476, DOI 10.1016/S0094-114X(98)00092-5 | Özet | İmalat toleranslı tasarım |
+| Dhamankar, S. ve diğ. (2025) | SAE Int. J. Commer. Veh. 18(1), 3–22, DOI 10.4271/02-18-01-0001 | Özet | Burulma titreşimi, yol deneyi |
+| Ali, J., Shaver, G., Bajaj, A.K. (2026) | Nonlinear Dynamics 114, DOI 10.1007/s11071-025-12172-2 | Kısmi tam metin | Boşluklu mafsalda darbeler |
+
+Notlar:
+- Bu çalışmadaki Gao ve Qi (2023, J. Mech. Sci. Technol.) kaydı aynı yazarların **farklı** bir makalesidir.
+- O inceleme Hummel ve Chassapis için yılı doğrulayamamıştı; Crossref kaydı 2000, cilt 35(3), s. 463–476 veriyor.
+- İki incelemenin ortak sonuçları örtüşüyor: Karaoğlan–Kuralay'daki iç tutarsızlık, `θ₀`'ın şema yerleşimi olmadığı ve bağımsız geometrik referans gereği.
+- O incelemedeki An ve Wang (2017) ile Gao ve Qi (2023) açık erişimli tam metinlerdir; okunup sayısal örnek çıkarılması yol haritasına eklendi.

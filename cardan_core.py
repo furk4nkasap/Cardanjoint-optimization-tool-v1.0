@@ -24,8 +24,8 @@ from scipy.optimize import differential_evolution, least_squares, minimize
 # Public release and API contract. Every public phase value uses physical yoke
 # clocking: 0 deg = aligned yokes on the shared shaft and 90 deg = perpendicular
 # yokes. The analytical Hooke-equation reference is private to this module.
-TOOL_VERSION = "1.3.0"
-CORE_API_VERSION = 9
+TOOL_VERSION = "1.4.0"
+CORE_API_VERSION = 10
 PARAMETER_SCHEMA_VERSION = 2
 ANGLE_UNIT = "degree"
 
@@ -160,6 +160,8 @@ class ExactSpeedBounds:
     q_min: float
     q_max: float
     unevenness_percent: float
+    # Amplitude of the output lead/lag relative to the input ("cardan error").
+    angle_error_amplitude_deg: float = 0.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -177,6 +179,40 @@ class ExactOptimum:
     lower_bound_percent: float
     certified_global: bool
     function_evaluations: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class ToleranceSensitivity:
+    """Worst closed-form unevenness inside symmetric assembly tolerances.
+
+    All values are maxima over a regular grid of the tolerance box (grid
+    spacing = tolerance / 10 for phases, tolerance / 2 for joint angles).
+    """
+
+    phase_tolerance_deg: float
+    beta_tolerance_deg: float
+    nominal_unevenness_percent: float
+    worst_phase_unevenness_percent: float
+    worst_beta_unevenness_percent: float
+    worst_combined_unevenness_percent: float
+
+
+@dataclass(frozen=True, slots=True)
+class DiscretePhaseOption:
+    phi1_deg: float
+    phi2_deg: float | None
+    unevenness_percent: float
+
+
+@dataclass(frozen=True, slots=True)
+class DiscretePhaseOptimum:
+    """Best phase pair that a splined connection can actually realise."""
+
+    tooth_count_1: int
+    tooth_count_2: int | None
+    best: DiscretePhaseOption
+    options: tuple[DiscretePhaseOption, ...]
+    continuous_optimum_percent: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -547,10 +583,15 @@ def exact_speed_ratio_bounds(parameters: CardanParameters) -> ExactSpeedBounds:
     difference = float(np.hypot(m11 - m22, m12 + m21))
     total = float(np.hypot(m11 + m22, m12 - m21))
     q_max = (total + difference) / (total - difference)
+    # The chain is equivalent to tan(theta_out) = kappa * tan(theta_in) up to
+    # constant shifts, so max|theta_out - theta_in| = atan((kappa-1)/(2 sqrt(kappa)))
+    # = atan((s1 - s2) / (2 sqrt(det))).
+    angle_error = math.degrees(math.atan(difference / (2.0 * math.sqrt(determinant))))
     return ExactSpeedBounds(
         q_min=float(1.0 / q_max),
         q_max=float(q_max),
         unevenness_percent=float(100.0 * difference * total / determinant),
+        angle_error_amplitude_deg=float(angle_error),
     )
 
 
@@ -647,6 +688,147 @@ def exact_phase_optimum(parameters: CardanParameters) -> ExactOptimum:
     value, phi1, phi2 = min(equivalent, key=lambda item: (round(item[1], 6), round(item[2], 6)))
     certified = value <= lower_bound + OPTIMALITY_TOLERANCE_PERCENT
     return ExactOptimum(phi1, phi2, value, lower_bound, bool(certified), evaluations)
+
+
+# ---------------------------------------------------------------------------
+# Assembly tolerances and discrete (spline) phase choices
+# ---------------------------------------------------------------------------
+
+_PHASE_TOLERANCE_NODES = 21  # spacing = tolerance / 10
+_BETA_TOLERANCE_NODES = 5  # spacing = tolerance / 2
+_BETA_TOLERANCE_UPPER_DEG = 89.0
+
+
+def tolerance_sensitivity(
+    parameters: CardanParameters,
+    phase_tolerance_deg: float = 1.0,
+    beta_tolerance_deg: float = 1.0,
+) -> ToleranceSensitivity:
+    """Worst unevenness when phases and joint angles deviate from nominal.
+
+    Phases vary within +-phase_tolerance_deg and every active joint angle
+    within +-beta_tolerance_deg (clipped to [0, 89] deg).  The closed-form
+    unevenness is evaluated on a regular grid of that box, which contains the
+    nominal point and all corners.
+    """
+
+    phase_tolerance = float(phase_tolerance_deg)
+    beta_tolerance = float(beta_tolerance_deg)
+    for name, value in (("phase", phase_tolerance), ("beta", beta_tolerance)):
+        if not math.isfinite(value) or value < 0.0:
+            raise ValueError(f"The {name} tolerance must be a finite, non-negative angle.")
+
+    nominal = exact_speed_ratio_bounds(parameters).unevenness_percent
+    joint_count = int(parameters.mode)
+
+    phase_offsets = phase_tolerance * np.linspace(-1.0, 1.0, _PHASE_TOLERANCE_NODES)
+    if joint_count == 1 or phase_tolerance == 0.0:
+        phi1_grid = np.asarray(parameters.phi1_deg, dtype=float)
+        phi2_grid = np.asarray(parameters.phi2_deg, dtype=float)
+    elif joint_count == 2:
+        phi1_grid = parameters.phi1_deg + phase_offsets
+        phi2_grid = np.asarray(parameters.phi2_deg, dtype=float)
+    else:
+        phi1_grid, phi2_grid = np.meshgrid(
+            parameters.phi1_deg + phase_offsets,
+            parameters.phi2_deg + phase_offsets,
+            indexing="ij",
+        )
+
+    def worst_over_phases(candidate: CardanParameters) -> float:
+        return float(np.max(exact_unevenness_grid(candidate, phi1_grid, phi2_grid)))
+
+    worst_phase = worst_over_phases(parameters)
+
+    beta_names = ("beta1_deg", "beta2_deg", "beta3_deg")[:joint_count]
+    if beta_tolerance == 0.0:
+        beta_offsets = np.array([0.0])
+    else:
+        beta_offsets = beta_tolerance * np.linspace(-1.0, 1.0, _BETA_TOLERANCE_NODES)
+    axes = [
+        np.unique(np.clip(float(getattr(parameters, name)) + beta_offsets, 0.0, _BETA_TOLERANCE_UPPER_DEG))
+        for name in beta_names
+    ]
+    worst_beta = nominal
+    worst_combined = worst_phase
+    for combination in np.array(np.meshgrid(*axes, indexing="ij")).reshape(joint_count, -1).T:
+        candidate = replace(parameters, **dict(zip(beta_names, (float(x) for x in combination))))
+        worst_beta = max(worst_beta, exact_speed_ratio_bounds(candidate).unevenness_percent)
+        worst_combined = max(worst_combined, worst_over_phases(candidate))
+
+    return ToleranceSensitivity(
+        phase_tolerance_deg=phase_tolerance,
+        beta_tolerance_deg=beta_tolerance,
+        nominal_unevenness_percent=float(nominal),
+        worst_phase_unevenness_percent=float(worst_phase),
+        worst_beta_unevenness_percent=float(worst_beta),
+        worst_combined_unevenness_percent=float(max(worst_combined, worst_beta)),
+    )
+
+
+def _validated_tooth_count(value: Any) -> int:
+    if isinstance(value, bool) or float(value) != int(value) or int(value) < 1:
+        raise ValueError("A spline tooth count must be a positive integer.")
+    return int(value)
+
+
+def discrete_phase_values_deg(tooth_count: int) -> tuple[float, ...]:
+    """Distinct yoke phases reachable by re-indexing a spline with N teeth.
+
+    Tooth index 0 is taken as the aligned position (phase 0).  Moving by one
+    tooth turns the yoke by 360/N; a yoke axis is undirected, so values are
+    reduced modulo 180 degrees.
+    """
+
+    count = _validated_tooth_count(tooth_count)
+    step = FULL_REVOLUTION_DEG / count
+    values = {round((index * step) % KINEMATIC_PERIOD_DEG, 9) for index in range(count)}
+    values = {0.0 if KINEMATIC_PERIOD_DEG - value < 1.0e-9 else value for value in values}
+    return tuple(sorted(values))
+
+
+def discrete_phase_optimum(
+    parameters: CardanParameters,
+    tooth_count_1: int,
+    tooth_count_2: int | None = None,
+) -> DiscretePhaseOptimum:
+    """Exhaustive closed-form search over the phases a spline can realise."""
+
+    if parameters.mode is CardanMode.SINGLE:
+        raise ValueError("Discrete phase selection requires at least two joints.")
+
+    values_1 = np.array(discrete_phase_values_deg(tooth_count_1))
+    count_1 = _validated_tooth_count(tooth_count_1)
+    continuous = exact_phase_optimum(parameters).unevenness_percent
+
+    if parameters.mode is CardanMode.DOUBLE:
+        metrics = exact_unevenness_grid(parameters, values_1)
+        options = [
+            DiscretePhaseOption(float(phi1), None, float(value))
+            for phi1, value in zip(values_1, metrics)
+        ]
+        count_2 = None
+    else:
+        count_2 = _validated_tooth_count(count_1 if tooth_count_2 is None else tooth_count_2)
+        values_2 = np.array(discrete_phase_values_deg(count_2))
+        grid_1, grid_2 = np.meshgrid(values_1, values_2, indexing="ij")
+        metrics = exact_unevenness_grid(parameters, grid_1, grid_2)
+        options = [
+            DiscretePhaseOption(float(phi1), float(phi2), float(value))
+            for phi1, phi2, value in zip(grid_1.ravel(), grid_2.ravel(), metrics.ravel())
+        ]
+
+    # Mirror-image options are equivalent; rounding makes the tie-break deterministic.
+    options.sort(
+        key=lambda item: (round(item.unevenness_percent, 9), item.phi1_deg, item.phi2_deg or 0.0)
+    )
+    return DiscretePhaseOptimum(
+        tooth_count_1=count_1,
+        tooth_count_2=count_2,
+        best=options[0],
+        options=tuple(options),
+        continuous_optimum_percent=float(continuous),
+    )
 
 
 def single_cardan_ratio(

@@ -40,3 +40,12 @@ Harmonik analiz ayrı bir özellik olarak önerilmiyor: ideal kinematik modelde 
 ## Fiziksel geçerleme
 
 Model hiçbir deneysel veriyle karşılaştırılmadı. En düşük eforlu seçenek, enkoderli basit bir düzenekte tek ve çift mafsal için hız oranı ölçümüdür (bkz. D10 ve K1'in düzenekleri). Ölçüm belirsizliği ve örnekleme aralığı kaydedilmeden yapılan karşılaştırma geçerleme sayılmamalıdır.
+
+## Durum güncellemesi — v1.4.0
+
+- **Tamamlandı (Kısa vade 1, 2, 7):** tolerans duyarlılığı, ayrık faz seçenekleri, `φ` dönüş yönünün tanımı.
+- **Tamamlandı (Orta vade 8, 9):** Seherr-Thoss ve diğ. (2006) Bölüm 1.2 ile Fischer ve Paul (1991) tam metinleri incelendi; sayısal örnekler teste eklendi. Kitapta üç veya daha fazla mafsalın faz eniyilemesi ve 2×2 matris formülasyonu bulunmuyor.
+- **Yeni iş:** An ve Wang (2017) ile Gao ve Qi (2023, *Science Progress*) açık erişimli tam metinlerinin okunması ve varsa sayısal örneklerin teste eklenmesi. Efor: K.
+- **Yeni iş:** Giriş–çıkış açı sapması genliğinin (`angle_error_amplitude_deg`) arayüzde ve dışa aktarımlarda gösterilmesi; direksiyon uygulamaları bu ölçütü kullanıyor. Efor: K.
+- **Yeni iş:** Fischer ve Paul'ün atıf verdiği kaynakların (Wagner 1979, SAE AE-7; Philipp 1960; Austin, Denavit ve Hartenberg 1965) uzaysal fazlama için incelenmesi. Efor: O; kaynağa erişim gerekir.
+- Sıradaki aşama: Aşama 2 (bakım ve sağlamlık).

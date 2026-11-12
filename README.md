@@ -2,7 +2,7 @@
 
 Interactive engineering application for the **kinematic analysis, physical yoke-phase optimization, visualization, validation, and export** of single, double, and triple Cardan (Hooke universal-joint) systems.
 
-![Version](https://img.shields.io/badge/version-1.3.0-informational.svg)
+![Version](https://img.shields.io/badge/version-1.4.0-informational.svg)
 ![Python](https://img.shields.io/badge/Python-3.x-blue.svg)
 ![Interface](https://img.shields.io/badge/Interface-Streamlit-success.svg)
 ![Optimization](https://img.shields.io/badge/Optimization-Closed--form%20%7C%20Grid%20%7C%20DE%20%7C%20Powell-orange.svg)
@@ -59,6 +59,7 @@ The project is designed to make phase compensation understandable both **numeric
 - Current and optimized response comparison
 - Closed-form (sampling-free) speed-ratio bounds and a certified global phase optimum
 - Five optimization methods
+- Assembly-tolerance sensitivity and spline-indexed (discrete) phase selection
 - Deterministic phase-map generation
 - Sub-degree and continuous phase optimization
 - Independent dense validation after optimization

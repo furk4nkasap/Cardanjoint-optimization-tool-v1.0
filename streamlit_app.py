@@ -1,4 +1,4 @@
-"""Beginner-friendly Streamlit interface for Cardan Joint Engineering Tool v1.3.0."""
+"""Beginner-friendly Streamlit interface for Cardan Joint Engineering Tool v1.4.0."""
 
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ except ModuleNotFoundError:
 # Core compatibility
 # ---------------------------------------------------------------------------
 
-_REQUIRED_CORE_API_VERSION = 9
+_REQUIRED_CORE_API_VERSION = 10
 _REQUIRED_CORE_OBJECTS = (
     "CardanMode",
     "CardanParameters",
@@ -57,6 +57,8 @@ _REQUIRED_CORE_OBJECTS = (
     "exact_speed_ratio_bounds",
     "exact_phase_optimum",
     "reduction_percent",
+    "tolerance_sensitivity",
+    "discrete_phase_optimum",
     "calculate_planar_scene_geometry",
     "calculate_kinematic_scene",
     "physical_phase_to_model_phase_deg",
@@ -95,12 +97,12 @@ PlotLabels = core.PlotLabels
 UNEVENNESS_LIMIT_PERCENT = core.UNEVENNESS_LIMIT_PERCENT
 
 
-APP_RELEASE = "1.3.0"
+APP_RELEASE = "1.4.0"
 PHYSICAL_PHASE_CONVENTION_VERSION = 1
 
 
 st.set_page_config(
-    page_title="Cardan Joint Engineering Tool v1.3.0",
+    page_title="Cardan Joint Engineering Tool v1.4.0",
     page_icon="⚙️",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -111,7 +113,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "en": {
         "title": "Cardan Joint Engineering Tool",
         "subtitle": "Kinematic analysis, phase optimization, interactive 3D visualization, validation, and export",
-        "version": "Version 1.3.0",
+        "version": "Version 1.4.0",
         "system_parameters": "System Parameters",
         "configuration": "Cardan configuration",
         "mode_single": "1 Cardan — Single",
@@ -227,7 +229,7 @@ The current model is **kinematic only**. Mass, inertia, torque, bearing reaction
     "tr": {
         "title": "Kardan Mafsalı Mühendislik Aracı",
         "subtitle": "Kinematik analiz, faz optimizasyonu, etkileşimli 3B görselleştirme, doğrulama ve dışa aktarma",
-        "version": "Sürüm 1.3.0",
+        "version": "Sürüm 1.4.0",
         "system_parameters": "Sistem Parametreleri",
         "configuration": "Kardan konfigürasyonu",
         "mode_single": "1 Kardan — Tekli",
@@ -344,7 +346,7 @@ Mevcut model **yalnızca kinematiktir**. Kütle, atalet, tork, yatak tepkileri, 
 
 
 TRANSLATIONS["en"].update({
-    "version": "Version 1.3.0",
+    "version": "Version 1.4.0",
     "language": "Language / Dil",
     "language_english": "English",
     "language_turkish": "Türkçe",
@@ -405,12 +407,28 @@ TRANSLATIONS["en"].update({
     "optimality_gap": "Gap to the global optimum",
     "certified": "Global optimum certified by the analytical lower bound",
     "not_certified": "Global optimality not certified",
+    "phase_reference_note": "Physical reference: 0° = aligned yokes · 90° = perpendicular yokes · positive φ turns the downstream yoke clockwise when looking from input to output. Use the same sense for φ₁ and φ₂.",
+    "tolerance_title": "Assembly tolerance and spline indexing",
+    "tolerance_note": "Worst closed-form unevenness when the yoke phases and joint angles deviate from their nominal values. Kinematic model only.",
+    "phase_tolerance": "Phase tolerance ± (deg)",
+    "beta_tolerance": "Joint-angle tolerance ± (deg)",
+    "tolerance_nominal": "Nominal",
+    "tolerance_worst_phase": "Worst case, phase error only",
+    "tolerance_worst_beta": "Worst case, joint-angle error only",
+    "tolerance_worst_combined": "Worst case, both",
+    "discrete_title": "Phases reachable with a splined connection",
+    "discrete_note": "Tooth 0 is taken as the aligned position; one tooth turns the yoke by 360°/N. Enter 0 to switch this off.",
+    "teeth_1": "Spline teeth, shaft 2 (φ₁)",
+    "teeth_2": "Spline teeth, shaft 3 (φ₂)",
+    "discrete_rank": "Rank",
+    "discrete_unevenness": "Unevenness",
+    "discrete_summary": "Best reachable: {best} · continuous optimum: {continuous}",
     "phase_convention_label": "Phase convention",
     "phase_convention_value": "physical_yoke_clocking: 0 deg = aligned yokes, 90 deg = perpendicular yokes (unit: degree)",
 })
 
 TRANSLATIONS["tr"].update({
-    "version": "Sürüm 1.3.0",
+    "version": "Sürüm 1.4.0",
     "language": "Dil / Language",
     "language_english": "English",
     "language_turkish": "Türkçe",
@@ -471,6 +489,22 @@ TRANSLATIONS["tr"].update({
     "optimality_gap": "Küresel optimuma uzaklık",
     "certified": "Küresel optimum analitik alt sınırla kanıtlandı",
     "not_certified": "Küresel optimum kanıtlanamadı",
+    "phase_reference_note": "Fiziksel referans: 0° = hizalı çatallar · 90° = dik çatallar · pozitif φ, girişten çıkışa doğru bakıldığında sonraki çatalı saat yönünde döndürür. φ₁ ve φ₂ için aynı yön kuralını kullanın.",
+    "tolerance_title": "Montaj toleransı ve spline indeksleme",
+    "tolerance_note": "Çatal fazları ve mafsal açıları nominal değerlerinden saptığında kapalı-form en kötü düzgünsüzlük. Yalnızca kinematik model.",
+    "phase_tolerance": "Faz toleransı ± (derece)",
+    "beta_tolerance": "Mafsal açısı toleransı ± (derece)",
+    "tolerance_nominal": "Nominal",
+    "tolerance_worst_phase": "En kötü durum, yalnız faz hatası",
+    "tolerance_worst_beta": "En kötü durum, yalnız mafsal açısı hatası",
+    "tolerance_worst_combined": "En kötü durum, ikisi birlikte",
+    "discrete_title": "Spline bağlantıyla ulaşılabilen fazlar",
+    "discrete_note": "0 numaralı diş hizalı konum kabul edilir; bir diş çatalı 360°/N döndürür. Kapatmak için 0 girin.",
+    "teeth_1": "Spline diş sayısı, mil 2 (φ₁)",
+    "teeth_2": "Spline diş sayısı, mil 3 (φ₂)",
+    "discrete_rank": "Sıra",
+    "discrete_unevenness": "Düzgünsüzlük",
+    "discrete_summary": "Ulaşılabilen en iyi: {best} · sürekli optimum: {continuous}",
     "phase_convention_label": "Faz konvansiyonu",
     "phase_convention_value": "physical_yoke_clocking: 0 derece = hizalı çatallar (aligned), 90 derece = dik çatallar (birim: derece)",
 })
@@ -877,6 +911,32 @@ def _cached_analysis(signature: tuple[Any, ...]) -> dict[str, Any]:
     )
 
 
+def _parameter_key(parameters: CardanParameters) -> tuple[tuple[str, Any], ...]:
+    return tuple(core.parameters_to_dict(parameters).items())
+
+
+@st.cache_data(show_spinner=False, max_entries=256)
+def _cached_tolerance(
+    parameter_key: tuple[tuple[str, Any], ...],
+    phase_tolerance_deg: float,
+    beta_tolerance_deg: float,
+) -> core.ToleranceSensitivity:
+    return core.tolerance_sensitivity(
+        CardanParameters(**dict(parameter_key)), phase_tolerance_deg, beta_tolerance_deg
+    )
+
+
+@st.cache_data(show_spinner=False, max_entries=256)
+def _cached_discrete(
+    parameter_key: tuple[tuple[str, Any], ...],
+    tooth_count_1: int,
+    tooth_count_2: int | None,
+) -> core.DiscretePhaseOptimum:
+    return core.discrete_phase_optimum(
+        CardanParameters(**dict(parameter_key)), tooth_count_1, tooth_count_2
+    )
+
+
 def _format_integer(value: int, language_code: str) -> str:
     formatted = f"{value:,}"
     return formatted.replace(",", ".") if language_code == "tr" else formatted
@@ -1062,6 +1122,19 @@ def _summary_json(parameters: CardanParameters, analysis: dict[str, Any]) -> byt
             "objective_unevenness_percent": result.unevenness_percent,
         },
         "diagnostics": asdict(diagnostics),
+        "tolerance_sensitivity": {
+            "note": "Worst closed-form unevenness on a grid of the +- tolerance box.",
+            "current": asdict(_cached_tolerance(
+                _parameter_key(parameters),
+                float(st.session_state.get("phase_tolerance_deg", 1.0)),
+                float(st.session_state.get("beta_tolerance_deg", 1.0)),
+            )),
+            "optimized": asdict(_cached_tolerance(
+                _parameter_key(analysis["optimized_parameters"]),
+                float(st.session_state.get("phase_tolerance_deg", 1.0)),
+                float(st.session_state.get("beta_tolerance_deg", 1.0)),
+            )),
+        },
         "closed_form": {
             "current": asdict(analysis["exact_current"]),
             "optimized": asdict(analysis["exact_optimized"]),
@@ -1719,6 +1792,85 @@ else:
             st.caption(f"{text['coarse_solution']}: {coarse_text}")
             with st.expander(text["diagnostic_message"], expanded=False):
                 st.code(diagnostics.message, language="text")
+
+        with st.expander(text["tolerance_title"], expanded=False):
+            st.caption(text["tolerance_note"])
+            tolerance_columns = st.columns(2)
+            phase_tolerance = float(tolerance_columns[0].number_input(
+                text["phase_tolerance"], min_value=0.0, max_value=10.0, value=1.0,
+                step=0.25, key="phase_tolerance_deg",
+            ))
+            beta_tolerance = float(tolerance_columns[1].number_input(
+                text["beta_tolerance"], min_value=0.0, max_value=5.0, value=1.0,
+                step=0.25, key="beta_tolerance_deg",
+            ))
+            sensitivity_current = _cached_tolerance(
+                _parameter_key(analyzed_parameters), phase_tolerance, beta_tolerance
+            )
+            sensitivity_optimized = _cached_tolerance(
+                _parameter_key(optimized_parameters), phase_tolerance, beta_tolerance
+            )
+            st.dataframe(
+                {
+                    text["metric"]: [
+                        text["tolerance_nominal"], text["tolerance_worst_phase"],
+                        text["tolerance_worst_beta"], text["tolerance_worst_combined"],
+                    ],
+                    text["current"]: [
+                        _format_percent(value, language_code) for value in (
+                            sensitivity_current.nominal_unevenness_percent,
+                            sensitivity_current.worst_phase_unevenness_percent,
+                            sensitivity_current.worst_beta_unevenness_percent,
+                            sensitivity_current.worst_combined_unevenness_percent,
+                        )
+                    ],
+                    text["optimized"]: [
+                        _format_percent(value, language_code) for value in (
+                            sensitivity_optimized.nominal_unevenness_percent,
+                            sensitivity_optimized.worst_phase_unevenness_percent,
+                            sensitivity_optimized.worst_beta_unevenness_percent,
+                            sensitivity_optimized.worst_combined_unevenness_percent,
+                        )
+                    ],
+                },
+                use_container_width=True, hide_index=True,
+            )
+
+            if analyzed_parameters.mode is not CardanMode.SINGLE:
+                st.markdown(f"**{text['discrete_title']}**")
+                st.caption(text["discrete_note"])
+                teeth_columns = st.columns(2)
+                teeth_1 = int(teeth_columns[0].number_input(
+                    text["teeth_1"], min_value=0, max_value=200, value=0, step=1,
+                    key="spline_teeth_1",
+                ))
+                teeth_2 = None
+                if analyzed_parameters.mode is CardanMode.TRIPLE:
+                    teeth_2 = int(teeth_columns[1].number_input(
+                        text["teeth_2"], min_value=0, max_value=200, value=0, step=1,
+                        key="spline_teeth_2",
+                    ))
+                if teeth_1 >= 1 and (teeth_2 is None or teeth_2 >= 1):
+                    discrete = _cached_discrete(
+                        _parameter_key(analyzed_parameters), teeth_1, teeth_2
+                    )
+                    top_options = discrete.options[:5]
+                    st.dataframe(
+                        {
+                            text["discrete_rank"]: [str(index + 1) for index in range(len(top_options))],
+                            "φ₁": [_format_degree(item.phi1_deg, language_code) for item in top_options],
+                            "φ₂": [_format_degree(item.phi2_deg, language_code) for item in top_options],
+                            text["discrete_unevenness"]: [
+                                _format_percent(item.unevenness_percent, language_code)
+                                for item in top_options
+                            ],
+                        },
+                        use_container_width=True, hide_index=True,
+                    )
+                    st.caption(text["discrete_summary"].format(
+                        best=_format_percent(discrete.best.unevenness_percent, language_code),
+                        continuous=_format_percent(discrete.continuous_optimum_percent, language_code),
+                    ))
 
     with tabs[1]:
         velocity_figure, _, _ = core.plot_velocity_ratio(

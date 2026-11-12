@@ -27,7 +27,7 @@ Bu belge kodda gerçekten uygulanan modeli anlatır (`cardan_core.py`, v1.3.0). 
 
 - Faz 180° periyodiktir; `CardanParameters` fazı `[0°, 180°)` aralığına indirger.
 - 3B sahnede ölçülen çatal açısı girilen `φ` ile 1e-9° içinde aynıdır (test: `test_scene_yoke_clocking_equals_entered_physical_phase`).
-- **Dönüş yönü:** Belgelerde `φ`'nin hangi uçtan bakışla hangi yönde ölçüldüğü tanımlı değildir. Düzlemsel modelde `(φ₁, φ₂)` ile `(−φ₁, −φ₂)` eşdeğerdir; `(φ₁, −φ₂)` eşdeğer değildir. Üçlü sistemde iki faz aynı yön kuralıyla uygulanmalıdır.
+- **Dönüş yönü (v1.4.0):** Pozitif `φ`, mil boyunca girişten çıkışa doğru bakıldığında sonraki mafsalın giriş çatalını önceki mafsalın çıkış çatalına göre **saat yönünde** döndürür (mil yönü etrafında sağ el kuralı). 3B sahne bu tanımla üretilir ve testle sabitlenmiştir (`test_scene_yoke_clocking_equals_entered_physical_phase`). Düzlemsel modelde `(φ₁, φ₂)` ile `(−φ₁, −φ₂)` eşdeğerdir; `(φ₁, −φ₂)` eşdeğer değildir. Bu nedenle yönün kendisi sonucu değiştirmez, ancak iki faz **aynı yön kuralıyla** uygulanmalıdır.
 
 ## 4. Geometri varsayımları
 

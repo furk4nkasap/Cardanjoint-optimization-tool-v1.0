@@ -166,3 +166,31 @@ python benchmark_optimizers.py
 - CSV dışa aktarımı değiştirilmedi; hâlâ parametre ve sürüm bilgisi taşımıyor (biçimi bozmamak için).
 - `use_container_width` parametresi Streamlit tarafından kullanımdan kaldırılmış olarak işaretleniyor; 17 yerde duruyor.
 - CI iş akışı eklendi ancak GitHub üzerinde henüz çalıştırılmadı.
+
+## 9. Güncelleme — v1.4.0
+
+### 9.1 Tam metinlerden eklenen literatür testleri
+
+Fischer ve Paul (1991) ile Seherr-Thoss ve diğ. (2006) tam metinleri okundu. Kaynaklar çıkışın girişe göre ileri–geri sapma genliğini ("cardan error") derece olarak verdiği için `ExactSpeedBounds.angle_error_amplitude_deg` eklendi: `atan((κ − 1) / (2√κ))`. Bu kapalı-form değer, çekirdeğin sürekli çıkış açısından örneklenen genlikle 1e-6° içinde aynıdır.
+
+| Kaynak | Girdi | Kaynak değeri | Model | Tolerans |
+|---|---|---|---|---|
+| Seherr-Thoss s. 6 | Tek mafsal, β = 45° | yaklaşık ±10° | 9,88° | ±0,6° |
+| Seherr-Thoss Şekil 1.7a | β = 30°; 15° | ≈ 4°; ≈ 1° | 4,12°; 0,99° | ±0,5° |
+| Seherr-Thoss Böl. 1.2.2 | Hizalı çatallar, β₁ ≠ β₂ | `cos β₁ / cos β₂` | Aynı | 1e-12 bağıl |
+| Seherr-Thoss Böl. 1.2.2 | 90° fazlı çatallar | `1 / (cos β₁ cos β₂)` | Aynı | 1e-12 bağıl |
+| Fischer–Paul s. 268, 270 | β = 45°/45°, RPA 0° → 90° | 0° → yaklaşık 20° | 0° → 19,47° | ±0,6° |
+| Fischer–Paul Şekil 11–12 | β = 30°/30°, RPA 0°; 20,1°; 50,1°; 80,1° | 0°; ≈ 2,9°; ≈ 6,4°; ≈ 8,0° | 0°; 2,84°; 6,32°; 8,09° | ±0,5° |
+
+Şekil değerleri gözle okunmuştur ve düşük hassasiyetli referanstır. Fischer ve Paul'ün eğrileri deneyle doğrulanmış olduğu için bu karşılaştırma, modelin yayımlanmış bir deneyle **dolaylı** uyumunu gösterir; ham ölçüm verisi kullanılmadığından fiziksel geçerleme sayılmaz.
+
+### 9.2 Aşama 1 — tolerans ve ayrık faz
+
+- `tolerance_sensitivity`: faz ve mafsal açısı tolerans kutusunda kapalı-form en kötü düzgünsüzlük (ızgara aralığı: fazda tolerans/10, açıda tolerans/2).
+- `discrete_phase_optimum`: spline diş sayısına göre ulaşılabilen fazların tamamı taranır.
+- Örnek (β = 43,02°/25,26°/47,51°, optimum fazlarda, ±1°): yalnız faz hatası %5,02; yalnız mafsal açısı hatası %8,44; ikisi birlikte %10,36. 16 dişli iki spline ile ulaşılabilen en iyi düzgünsüzlük %4,27'dir (sürekli optimum %0).
+- Sınır: en kötü durum ızgara üzerinde aranır; rastgele iç noktalar raporlanan değeri %1'den fazla aşmamıştır (8 senaryo × 300 nokta).
+
+### 9.3 Test sayısı
+
+`python -m pytest tests` → 313 test, tamamı geçti (v1.3.0'da 267).

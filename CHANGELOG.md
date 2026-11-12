@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.4.0 — Tolerance Sensitivity & Discrete Phasing
+
+- `tolerance_sensitivity`: faz ve mafsal açısı toleransı içinde kapalı-form en kötü düzgünsüzlük.
+- `discrete_phase_values_deg`, `discrete_phase_optimum`: spline diş sayısına göre ulaşılabilen fazlar ve en iyisi.
+- Arayüz: Genel Bakış sekmesine "Montaj toleransı ve spline indeksleme" bölümü eklendi.
+- JSON özetine `tolerance_sensitivity` bloğu eklendi (mevcut alanlar değişmedi).
+- Faz dönüş yönü belgelerde ve arayüzde tanımlandı.
+- Core API sürümü 10. Mevcut sayısal sonuçlar değişmedi.
+
 ## v1.3.0 — Closed-form Verification & Optimizer Correctness
 
 - Kapalı-form (örneklemesiz) hız oranı sınırları eklendi: `exact_speed_ratio_bounds`, `exact_unevenness_grid`.

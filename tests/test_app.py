@@ -104,3 +104,31 @@ def test_analysis_state_carries_certified_closed_form_optimum():
     assert analysis["optimality_gap_percent"] < 1e-7
     payload = core.parameters_to_payload(analysis["optimized_parameters"])
     assert json.loads(json.dumps(payload))["phase_convention"] == "physical_yoke_clocking"
+
+
+def _number_input(app, key):
+    for widget in app.number_input:
+        if widget.key == key:
+            return widget
+    raise AssertionError(f"number_input {key!r} not found")
+
+
+@pytest.mark.parametrize("mode", [1, 2, 3])
+def test_tolerance_and_spline_section_runs(mode):
+    app = _run()
+    app.sidebar.selectbox[0].set_value(mode).run()
+    assert not app.exception
+    _number_input(app, "phase_tolerance_deg").set_value(2.0).run()
+    _number_input(app, "beta_tolerance_deg").set_value(0.5).run()
+    assert not app.exception
+    if mode >= 2:
+        _number_input(app, "spline_teeth_1").set_value(16).run()
+        if mode == 3:
+            _number_input(app, "spline_teeth_2").set_value(15).run()
+        assert not app.exception
+
+
+def test_phase_sense_is_stated_in_the_sidebar():
+    app = _run()
+    captions = " ".join(str(item.value) for item in app.sidebar.caption)
+    assert "clockwise" in captions and "same sense" in captions
