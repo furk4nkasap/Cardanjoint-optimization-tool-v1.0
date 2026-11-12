@@ -1,0 +1,22 @@
+Cardan Joint Engineering Tool v1.3.0 - optimizer benchmark
+Scenarios: 150 random triple systems, beta in [0, 60] deg, seed 7
+Reference: closed-form optimum, certified global in 150/150 cases
+
+Gap = closed-form unevenness of the returned phases minus the global optimum (percentage points)
+method                    median gap    p95 gap    max gap  median ms  median nfev  success %
+grid                       0.000e+00  3.332e+00  7.036e+00       10.6         1296        100
+local_refinement           2.975e-14  1.958e-01  8.659e-01       19.2         2977        100
+differential_evolution     3.513e-05  7.605e-04  1.296e-03      136.7         2424         81
+hybrid                     3.513e-05  7.606e-04  1.296e-03      141.3         2550        100
+exact                      0.000e+00  0.000e+00  3.375e-14       10.1         2600        100
+
+Seed sensitivity (20 scenarios x 10 seeds)
+  differential_evolution   max gap 1.002e-03 pu, max spread 1.878e-04 pu, time min/median/max 85/132/270 ms
+  hybrid                   max gap 1.002e-03 pu, max spread 1.878e-04 pu, time min/median/max 97/144/273 ms
+
+Sampling error of the 360-sample objective versus the closed form (200 random triples per band)
+  beta in [18, 30] deg: worst -0.0043 %, median -0.00078 %
+  beta in [27, 45] deg: worst -0.0099 %, median -0.00141 %
+  beta in [36, 60] deg: worst -0.0374 %, median -0.00217 %
+  beta in [45, 75] deg: worst -0.3120 %, median -0.00522 %
+  beta in [51, 85] deg: worst -10.3383 %, median -0.02052 %

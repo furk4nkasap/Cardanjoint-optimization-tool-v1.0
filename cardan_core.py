@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from enum import Enum, IntEnum
+import math
 from time import perf_counter
 from typing import Any, Mapping
 
@@ -17,14 +18,14 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.patches import Arc, Circle
 from numpy.typing import ArrayLike, NDArray
-from scipy.optimize import differential_evolution, minimize
+from scipy.optimize import differential_evolution, least_squares, minimize
 
 
 # Public release and API contract. Every public phase value uses physical yoke
 # clocking: 0 deg = aligned yokes on the shared shaft and 90 deg = perpendicular
 # yokes. The analytical Hooke-equation reference is private to this module.
-TOOL_VERSION = "1.2.4"
-CORE_API_VERSION = 8
+TOOL_VERSION = "1.3.0"
+CORE_API_VERSION = 9
 PARAMETER_SCHEMA_VERSION = 2
 ANGLE_UNIT = "degree"
 
@@ -40,6 +41,8 @@ class OptimizationMethod(str, Enum):
     LOCAL_REFINEMENT = "local_refinement"
     DIFFERENTIAL_EVOLUTION = "differential_evolution"
     HYBRID = "hybrid"
+    # Closed-form objective (no angular sampling) with a certified optimum.
+    EXACT = "exact"
 
 
 class PhaseConvention(str, Enum):
@@ -70,6 +73,12 @@ class CardanParameters:
                 "Convert internal Hooke-reference phases before construction."
             )
         object.__setattr__(self, "phase_convention", convention)
+        for name in (
+            "beta1_deg", "beta2_deg", "beta3_deg",
+            "phi1_deg", "phi2_deg", "theta0_deg", "optimization_step_deg",
+        ):
+            if not math.isfinite(float(getattr(self, name))):
+                raise ValueError(f"{name} must be a finite number.")
         # 180 degrees is physically equivalent to 0 degrees for an undirected
         # yoke axis. Canonicalising here prevents duplicate external states.
         object.__setattr__(self, "phi1_deg", float(self.phi1_deg) % 180.0)
@@ -142,6 +151,32 @@ class CurveMetrics:
     rms_speed_error_percent: float
     maximum_positive_error_percent: float
     maximum_negative_error_percent: float
+
+
+@dataclass(frozen=True, slots=True)
+class ExactSpeedBounds:
+    """Closed-form extremes of the total speed ratio over one revolution."""
+
+    q_min: float
+    q_max: float
+    unevenness_percent: float
+
+
+@dataclass(frozen=True, slots=True)
+class ExactOptimum:
+    """Phase optimum of the closed-form objective.
+
+    ``lower_bound_percent`` is a rigorous bound valid for every phase choice.
+    ``certified_global`` is True when the attained value meets that bound, which
+    proves global optimality independently of the search that produced it.
+    """
+
+    phi1_deg: float | None
+    phi2_deg: float | None
+    unevenness_percent: float
+    lower_bound_percent: float
+    certified_global: bool
+    function_evaluations: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -243,6 +278,12 @@ class PlotLabels:
 
 
 EPSILON = 1.0e-12
+# Below this unevenness (in percent) a configuration is treated as constant
+# velocity for reporting purposes; a percentage reduction is then undefined.
+NEGLIGIBLE_UNEVENNESS_PERCENT = 1.0e-9
+# Tolerance (percentage points) used to certify a global optimum against the
+# rigorous lower bound and to decide that a candidate does not improve.
+OPTIMALITY_TOLERANCE_PERCENT = 1.0e-7
 UNEVENNESS_LIMIT_PERCENT = 5.0
 BETA_INFORMATION_THRESHOLD_DEG = 30.0
 BETA_WARNING_THRESHOLD_DEG = 45.0
@@ -428,6 +469,184 @@ def hooke_output_angle_rad(
         np.sin(theta_in),
         cos_beta * np.cos(theta_in),
     )
+
+
+# ---------------------------------------------------------------------------
+# Closed-form (sampling-free) evaluation
+# ---------------------------------------------------------------------------
+#
+# Writing the shaft angle as the direction of v = (sin(theta), cos(theta)),
+# one Hooke joint is the linear map diag(1, cos(beta)) and a yoke phase is a
+# plane rotation.  The whole chain is therefore one 2x2 matrix M and
+#
+#     d(theta_out)/d(theta_in) = det(M) / |M v|^2 .
+#
+# Its extremes are the ratio of the singular values of M:
+#     q_max = s1 / s2,  q_min = s2 / s1,  mean(q) = 1.
+# With  D = hypot(m11 - m22, m12 + m21) = s1 - s2  and
+#       S = hypot(m11 + m22, m12 - m21) = s1 + s2  (det(M) > 0)
+# the unevenness is  U = 100 * D * S / det(M)  without cancellation error.
+# The derivation is documented in docs/model_assumptions.md and verified in
+# docs/validation_report.md.
+
+
+def _composite_matrix_entries(
+    cos_betas: tuple[float, ...],
+    psi1_rad: ArrayLike = 0.0,
+    psi2_rad: ArrayLike = 0.0,
+) -> tuple[Any, Any, Any, Any, float]:
+    """Entries of the composite map for model phases (broadcastable arrays)."""
+
+    c1 = float(cos_betas[0])
+    shape = np.broadcast(np.asarray(psi1_rad), np.asarray(psi2_rad)).shape
+    one = np.ones(shape, dtype=float)
+    m11, m12, m21, m22 = one, 0.0 * one, 0.0 * one, c1 * one
+    determinant = c1
+    for cosine_beta, psi in zip(cos_betas[1:], (psi1_rad, psi2_rad)):
+        cosine, sine = np.cos(psi), np.sin(psi)
+        r11, r12 = cosine * m11 - sine * m21, cosine * m12 - sine * m22
+        r21, r22 = sine * m11 + cosine * m21, sine * m12 + cosine * m22
+        m11, m12 = r11, r12
+        m21, m22 = float(cosine_beta) * r21, float(cosine_beta) * r22
+        determinant *= float(cosine_beta)
+    return m11, m12, m21, m22, float(determinant)
+
+
+def _cos_betas(parameters: CardanParameters) -> tuple[float, ...]:
+    return tuple(float(np.cos(np.deg2rad(beta))) for beta in parameters.active_betas)
+
+
+def exact_unevenness_grid(
+    parameters: CardanParameters,
+    phi1_deg: ArrayLike = 0.0,
+    phi2_deg: ArrayLike = 0.0,
+) -> NDArray[np.float64]:
+    """Closed-form unevenness (%) for arrays of physical phase candidates."""
+
+    psi1 = np.deg2rad(physical_phase_to_model_phase_deg(phi1_deg))
+    psi2 = np.deg2rad(physical_phase_to_model_phase_deg(phi2_deg))
+    m11, m12, m21, m22, determinant = _composite_matrix_entries(
+        _cos_betas(parameters), psi1, psi2
+    )
+    difference = np.hypot(m11 - m22, m12 + m21)
+    total = np.hypot(m11 + m22, m12 - m21)
+    return np.asarray(100.0 * difference * total / determinant, dtype=float)
+
+
+def exact_speed_ratio_bounds(parameters: CardanParameters) -> ExactSpeedBounds:
+    """Exact q_min, q_max and unevenness of the entered configuration.
+
+    The result does not depend on theta0 or on any angular sampling grid.
+    """
+
+    phases = tuple(parameters.active_phases) + (0.0, 0.0)
+    psi = np.deg2rad(physical_phase_to_model_phase_deg(phases[:2]))
+    m11, m12, m21, m22, determinant = _composite_matrix_entries(
+        _cos_betas(parameters), float(psi[0]), float(psi[1])
+    )
+    difference = float(np.hypot(m11 - m22, m12 + m21))
+    total = float(np.hypot(m11 + m22, m12 - m21))
+    q_max = (total + difference) / (total - difference)
+    return ExactSpeedBounds(
+        q_min=float(1.0 / q_max),
+        q_max=float(q_max),
+        unevenness_percent=float(100.0 * difference * total / determinant),
+    )
+
+
+def minimum_unevenness_lower_bound_percent(parameters: CardanParameters) -> float:
+    """Rigorous lower bound of the unevenness over all phase choices.
+
+    The condition number is sub-multiplicative, kappa(AB) <= kappa(A) kappa(B),
+    hence ln kappa(chain) >= l_max - (sum of the other l_i) with
+    l_i = ln(1 / cos(beta_i)).  A non-positive right-hand side means that
+    exact constant velocity is not excluded.
+    """
+
+    lengths = sorted(-math.log(value) for value in _cos_betas(parameters))
+    residual = max(0.0, lengths[-1] - sum(lengths[:-1]))
+    return float(200.0 * math.sinh(residual))
+
+
+def reduction_percent(current_percent: float, optimized_percent: float) -> float | None:
+    """Relative unevenness reduction, or None when the baseline is ~zero.
+
+    A percentage of a vanishing baseline is numerically meaningless, so it is
+    reported as undefined instead of being divided.
+    """
+
+    current = float(current_percent)
+    optimized = float(optimized_percent)
+    if not current > NEGLIGIBLE_UNEVENNESS_PERCENT:
+        return None
+    return float(max(0.0, 100.0 * (current - optimized) / current))
+
+
+def exact_phase_optimum(parameters: CardanParameters) -> ExactOptimum:
+    """Minimise the closed-form unevenness over the physical yoke phases.
+
+    Double joint: aligned yokes (phi = 0) are always optimal in the planar
+    model, with residual kappa = cos(beta_small) / cos(beta_large).
+    Triple joint: U is a monotone function of the squared Frobenius norm of
+    the composite map, a smooth trigonometric polynomial of the two phases;
+    s1 - s2 is minimised as a two-equation least-squares problem
+    (Levenberg-Marquardt) from the best nodes of a closed-form grid.
+    """
+
+    lower_bound = minimum_unevenness_lower_bound_percent(parameters)
+    if parameters.mode is CardanMode.SINGLE:
+        value = exact_speed_ratio_bounds(parameters).unevenness_percent
+        return ExactOptimum(None, None, value, lower_bound, True, 1)
+
+    if parameters.mode is CardanMode.DOUBLE:
+        value = float(exact_unevenness_grid(parameters, 0.0))
+        certified = value <= lower_bound + OPTIMALITY_TOLERANCE_PERCENT
+        return ExactOptimum(0.0, None, value, lower_bound, bool(certified), 1)
+
+    cos_betas = _cos_betas(parameters)
+
+    def residual(model_phases_rad: ArrayLike) -> NDArray[np.float64]:
+        # |residual| = s1 - s2.  Solving it as a least-squares problem keeps
+        # full precision when exact constant velocity (residual = 0) exists.
+        psi1, psi2 = np.asarray(model_phases_rad, dtype=float)
+        m11, m12, m21, m22, _ = _composite_matrix_entries(cos_betas, psi1, psi2)
+        return np.array([float(m11 - m22), float(m12 + m21)])
+
+    nodes = np.deg2rad(np.arange(0.0, KINEMATIC_PERIOD_DEG, 5.0))
+    psi1_grid, psi2_grid = np.meshgrid(nodes, nodes, indexing="ij")
+    m11, m12, m21, m22, _ = _composite_matrix_entries(cos_betas, psi1_grid, psi2_grid)
+    landscape = m11 * m11 + m12 * m12 + m21 * m21 + m22 * m22
+    evaluations = int(landscape.size)
+
+    candidates: list[tuple[float, float, float]] = []
+    for flat_index in np.argsort(landscape, axis=None)[:6]:
+        row, column = np.unravel_index(int(flat_index), landscape.shape)
+        solution = least_squares(
+            residual,
+            x0=np.array([nodes[row], nodes[column]]),
+            method="lm",
+            xtol=1.0e-15,
+            ftol=1.0e-15,
+            gtol=1.0e-15,
+        )
+        evaluations += int(solution.nfev)
+        physical = model_phase_to_physical_phase_deg(np.rad2deg(solution.x))
+        physical = np.where(KINEMATIC_PERIOD_DEG - physical < 1.0e-9, 0.0, physical)
+        physical = np.where(physical < 1.0e-9, 0.0, physical)
+        value = float(exact_unevenness_grid(parameters, physical[0], physical[1]))
+        candidates.append((value, float(physical[0]), float(physical[1])))
+        if value <= lower_bound + 0.01 * OPTIMALITY_TOLERANCE_PERCENT:
+            break  # the rigorous bound is attained: no better phase pair exists
+
+    best_value = min(item[0] for item in candidates)
+    # Mirror-image optima are equivalent; pick the smallest phases for determinism.
+    equivalent = [
+        item for item in candidates
+        if item[0] <= best_value + 0.01 * OPTIMALITY_TOLERANCE_PERCENT
+    ]
+    value, phi1, phi2 = min(equivalent, key=lambda item: (round(item[1], 6), round(item[2], 6)))
+    certified = value <= lower_bound + OPTIMALITY_TOLERANCE_PERCENT
+    return ExactOptimum(phi1, phi2, value, lower_bound, bool(certified), evaluations)
 
 
 def single_cardan_ratio(
@@ -1314,6 +1533,11 @@ def calculate_analysis(
     q_current_plot = calculate_total_ratio(theta_plot_deg, parameters)
     q_current_metric = calculate_total_ratio(theta_metric_deg, parameters)
 
+    # Sampling-free reference optimum; reported with every method.
+    exact_started = perf_counter()
+    exact_optimum = exact_phase_optimum(parameters)
+    exact_elapsed = perf_counter() - exact_started
+
     coarse_started = perf_counter()
     coarse_result, phase_landscape = optimize_phase_with_landscape(parameters, theta_metric_deg)
     coarse_elapsed = perf_counter() - coarse_started
@@ -1389,6 +1613,38 @@ def calculate_analysis(
             validation_sample_count=int(settings.validation_sample_count),
             random_seed=None,
         )
+    elif settings.method is OptimizationMethod.EXACT:
+        exact_solution = exact_optimum
+        phase_vector = [exact_solution.phi1_deg]
+        if parameters.mode is CardanMode.TRIPLE:
+            phase_vector.append(exact_solution.phi2_deg)
+        optimization_result = _result_from_phase_vector(
+            parameters,
+            theta_metric_deg,
+            phase_vector,
+            coarse_result,
+            settings.method,
+        )
+        diagnostics = OptimizationDiagnostics(
+            method=settings.method.value,
+            success=bool(exact_solution.certified_global),
+            message=(
+                "Closed-form optimum; global optimality certified by the lower bound."
+                if exact_solution.certified_global
+                else "Closed-form optimum found, but the lower bound was not attained; "
+                "global optimality is not certified."
+            ),
+            function_evaluations=(
+                exact_solution.function_evaluations + phase_combination_count(parameters)
+            ),
+            iterations=0,
+            elapsed_seconds=float(coarse_elapsed + exact_elapsed),
+            objective_unevenness_percent=float(optimization_result.unevenness_percent),
+            validated_unevenness_percent=float(optimization_result.unevenness_percent),
+            validation_delta_percent=0.0,
+            validation_sample_count=int(settings.validation_sample_count),
+            random_seed=None,
+        )
     else:
         optimization_result, diagnostics = optimize_continuous_phase(
             parameters,
@@ -1403,6 +1659,32 @@ def calculate_analysis(
             ),
             elapsed_seconds=float(diagnostics.elapsed_seconds + coarse_elapsed),
         )
+
+    # The entered configuration is always a candidate: an "optimum" must never
+    # be worse than the starting point (e.g. when the current phases lie
+    # between grid nodes).  Both values use the same objective grid.
+    current_is_optimal = False
+    if parameters.mode is not CardanMode.SINGLE:
+        current_objective = float(unevenness_percent(q_current_metric))
+        if current_objective <= (
+            optimization_result.unevenness_percent + OPTIMALITY_TOLERANCE_PERCENT
+        ):
+            current_is_optimal = True
+            optimization_result = _result_from_phase_vector(
+                parameters,
+                theta_metric_deg,
+                list(parameters.active_phases),
+                coarse_result,
+                settings.method,
+            )
+            diagnostics = replace(
+                diagnostics,
+                message=(
+                    diagnostics.message
+                    + " The current configuration was retained because no candidate improved it."
+                ),
+                objective_unevenness_percent=float(optimization_result.unevenness_percent),
+            )
 
     optimized_parameters = apply_optimized_phases(parameters, optimization_result)
     q_optimized_plot = calculate_total_ratio(theta_plot_deg, optimized_parameters)
@@ -1420,7 +1702,17 @@ def calculate_analysis(
         ),
     )
 
+    exact_current = exact_speed_ratio_bounds(parameters)
+    exact_optimized = exact_speed_ratio_bounds(optimized_parameters)
+
     return {
+        "exact_current": exact_current,
+        "exact_optimized": exact_optimized,
+        "exact_optimum": exact_optimum,
+        "optimality_gap_percent": float(
+            max(0.0, exact_optimized.unevenness_percent - exact_optimum.unevenness_percent)
+        ),
+        "current_is_optimal": current_is_optimal,
         "theta_plot_deg": theta_plot_deg,
         "theta_metric_deg": theta_metric_deg,
         "q_current_plot": q_current_plot,
@@ -1697,7 +1989,9 @@ def plot_geometry_2d(
     ax.axis("off")
     ax.set_title(plot_labels.geometry_title, fontsize=13)
 
-    directions = [rotate_vector_2d([1.0, 0.0], parameters.theta0_deg)]
+    # theta0 is the rotation reference of the input shaft about its own axis;
+    # it does not incline the shaft layout, so the schematic is not rotated.
+    directions = [np.array([1.0, 0.0])]
     for beta_deg in parameters.active_betas:
         directions.append(rotate_vector_2d(directions[-1], beta_deg))
 

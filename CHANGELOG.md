@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.3.0 — Closed-form Verification & Optimizer Correctness
+
+- Kapalı-form (örneklemesiz) hız oranı sınırları eklendi: `exact_speed_ratio_bounds`, `exact_unevenness_grid`.
+- Kanıtlanabilir küresel faz optimumu eklendi: `exact_phase_optimum`, `minimum_unevenness_lower_bound_percent`, `OptimizationMethod.EXACT`.
+- Düzeltme: mevcut konfigürasyon artık her yöntemde adaydır; "optimum" mevcut durumdan kötü olamaz (negatif azalma hatası).
+- Düzeltme: çift mafsalda optimum, örnekleme gürültüsü yerine analitik olarak `0°` (hizalı çatallar) verilir.
+- Düzeltme: `theta0`, `phi` ve adım için sonluluk denetimi eklendi.
+- Düzeltme: 2B geometri şeması artık `theta0` kadar döndürülmüyor.
+- Azalma yüzdesi sıfıra yakın tabanda tanımsız (`—`) gösterilir: `reduction_percent`.
+- Arayüz: standart analiz kapalı-form optimumu kullanır; teşhis tablosuna kapalı-form değer, küresel optimum ve optimuma uzaklık eklendi.
+- Dışa aktarım: Excel'e faz konvansiyonu ve konfigürasyon satırları, JSON özetine `closed_form` bloğu eklendi (mevcut alanlar değişmedi).
+- `tests/` (267 test), `benchmarks/benchmark_methods.py`, `docs/` ve CI iş akışı eklendi.
+- Core API sürümü 9. Mevcut dört yöntemin sayısal sonuçları değişmedi.
+
 ## v1.2.4 — Phase Safety & Model Transparency
 
 - Bütün paket, uygulama, README ve dışa aktarım sürümleri `1.2.4` olarak birleştirildi.
