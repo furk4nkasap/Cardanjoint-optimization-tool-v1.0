@@ -24,7 +24,7 @@ from scipy.optimize import differential_evolution, least_squares, minimize
 # Public release and API contract. Every public phase value uses physical yoke
 # clocking: 0 deg = aligned yokes on the shared shaft and 90 deg = perpendicular
 # yokes. The analytical Hooke-equation reference is private to this module.
-TOOL_VERSION = "1.4.0"
+TOOL_VERSION = "1.5.0"
 CORE_API_VERSION = 10
 PARAMETER_SCHEMA_VERSION = 2
 ANGLE_UNIT = "degree"
@@ -1441,6 +1441,54 @@ def _periodic_local_grid(
     return np.unique(np.round(normalized, decimals=10))
 
 
+# A local-refinement window never uses more than this many nodes per phase
+# axis.  Wider windows are refined in stages (coarser pass, then a finer pass
+# around its best node) instead of one exhaustive pass.
+LOCAL_REFINEMENT_MAX_NODES = 81
+
+
+def _local_refinement_stages(
+    half_width_deg: float,
+    step_deg: float,
+) -> list[tuple[float, float]]:
+    """Return (half_width, step) passes for a periodic local refinement.
+
+    A single pass is returned whenever it fits into LOCAL_REFINEMENT_MAX_NODES
+    nodes per axis, which keeps the default settings identical to an exhaustive
+    window.  Otherwise each coarser pass uses exactly that many nodes and the
+    next pass searches +-2 of its steps around the best node.
+    """
+
+    half_width = float(half_width_deg)
+    step = float(step_deg)
+    if step <= 0.0:
+        raise ValueError("Refinement step must be positive.")
+    stages: list[tuple[float, float]] = []
+    while 2.0 * half_width / step + 1.0 > LOCAL_REFINEMENT_MAX_NODES + 1.0e-9:
+        intermediate = 2.0 * half_width / (LOCAL_REFINEMENT_MAX_NODES - 1)
+        stages.append((half_width, intermediate))
+        half_width = 2.0 * intermediate
+    stages.append((half_width, step))
+    return stages
+
+
+def local_refinement_evaluation_count(
+    parameters: CardanParameters,
+    refinement_step_deg: float,
+) -> int:
+    """Number of phase candidates evaluated by ``refine_optimization``."""
+
+    if parameters.mode is CardanMode.SINGLE:
+        return 0
+    exponent = 1 if parameters.mode is CardanMode.DOUBLE else 2
+    total = 0
+    for half_width, step in _local_refinement_stages(
+        parameters.optimization_step_deg, refinement_step_deg
+    ):
+        total += int(_periodic_local_grid(90.0, half_width, step).size) ** exponent
+    return total
+
+
 def refine_optimization(
     parameters: CardanParameters,
     theta_grid_deg: ArrayLike,
@@ -1455,25 +1503,22 @@ def refine_optimization(
         raise ValueError("A coarse phase optimum is required before refinement.")
 
     theta_deg = np.asarray(theta_grid_deg, dtype=float)
-    half_width = float(parameters.optimization_step_deg)
-    phi1_values = _periodic_local_grid(
-        coarse_result.phi1_deg,
-        half_width,
-        float(refinement_step_deg),
-    )
+    if parameters.mode is CardanMode.TRIPLE and coarse_result.phi2_deg is None:
+        raise ValueError("Triple-Cardan refinement requires both coarse phases.")
 
-    local_parameters = replace(parameters, optimization_step_deg=float(refinement_step_deg))
-    if parameters.mode is CardanMode.DOUBLE:
-        refined, _ = _double_landscape(local_parameters, theta_deg, phi1_values)
-    else:
-        if coarse_result.phi2_deg is None:
-            raise ValueError("Triple-Cardan refinement requires both coarse phases.")
-        phi2_values = _periodic_local_grid(
-            coarse_result.phi2_deg,
-            half_width,
-            float(refinement_step_deg),
-        )
-        refined, _ = _triple_landscape(local_parameters, theta_deg, phi1_values, phi2_values)
+    refined = coarse_result
+    for half_width, step in _local_refinement_stages(
+        parameters.optimization_step_deg, refinement_step_deg
+    ):
+        phi1_values = _periodic_local_grid(refined.phi1_deg, half_width, step)
+        local_parameters = replace(parameters, optimization_step_deg=float(step))
+        if parameters.mode is CardanMode.DOUBLE:
+            refined, _ = _double_landscape(local_parameters, theta_deg, phi1_values)
+        else:
+            phi2_values = _periodic_local_grid(refined.phi2_deg, half_width, step)
+            refined, _ = _triple_landscape(
+                local_parameters, theta_deg, phi1_values, phi2_values
+            )
 
     return replace(
         refined,
@@ -1763,24 +1808,8 @@ def calculate_analysis(
             refinement_step_deg=float(settings.local_refinement_step_deg),
         )
         local_elapsed = perf_counter() - local_started
-        local_phi1_count = int(
-            _periodic_local_grid(
-                float(coarse_result.phi1_deg),
-                float(parameters.optimization_step_deg),
-                float(settings.local_refinement_step_deg),
-            ).size
-        )
-        local_evaluations = (
-            local_phi1_count
-            if parameters.mode is CardanMode.DOUBLE
-            else local_phi1_count
-            * int(
-                _periodic_local_grid(
-                    float(coarse_result.phi2_deg),
-                    float(parameters.optimization_step_deg),
-                    float(settings.local_refinement_step_deg),
-                ).size
-            )
+        local_evaluations = local_refinement_evaluation_count(
+            parameters, float(settings.local_refinement_step_deg)
         )
         diagnostics = OptimizationDiagnostics(
             method=settings.method.value,

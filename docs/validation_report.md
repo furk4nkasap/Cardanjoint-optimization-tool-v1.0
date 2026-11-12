@@ -194,3 +194,17 @@ Fischer ve Paul (1991) ile Seherr-Thoss ve diğ. (2006) tam metinleri okundu. Ka
 ### 9.3 Test sayısı
 
 `python -m pytest tests` → 313 test, tamamı geçti (v1.3.0'da 267).
+
+## 10. Güncelleme — v1.5.0 (Aşama 2)
+
+| Değişiklik | Ölçüm | Test |
+|---|---|---|
+| Aşamalı yerel inceltme (eksen başına en çok 81 düğüm) | Kaba 15°, yerel 0,05°: 361 345 → 7 666 değerlendirme; 2,5 s → 39 ms | `test_wide_local_refinement_windows_are_staged` |
+| Varsayılan pencere tek geçiş | 5° / 0,25°: 41 × 41, sonuç v1.2.4 ile aynı | `test_local_refinement_default_window_is_a_single_exhaustive_pass`, `test_legacy_regression_value_of_local_refinement_is_unchanged` |
+| Aşamalı taramanın bedeli | Tam taramaya göre amaç değeri en çok 0,038 pu kötü (25 senaryo × 4 ayar) | Testte kabul sınırı 0,1 pu |
+| CSV ek sütunları | İlk beş sütun değişmedi; 12 üst bilgi sütunu eklendi | `test_curve_csv_keeps_first_columns_and_adds_metadata` |
+| Ultra kutusunun kaldırılması | Standart yöntem kapalı-form; stokastik yöntemler uzman modunda ve elle çalışır | `test_standard_method_is_closed_form_and_stochastic_methods_need_expert_mode` |
+| `width="stretch"` geçişi | Streamlit 1.45–1.53 paket kaynaklarında denetlendi: beş bileşenin tamamı 1.51'den itibaren destekliyor | `test_no_deprecated_width_argument_remains` |
+| Önbellek sınırı | `max_entries=128` (kayıt başına ~147 KB → en çok ~19 MB) | — |
+
+Doğrulanmayanlar: `width` geçişi yalnızca Streamlit 1.67 ile çalıştırıldı; 1.51'den eski sürümlerdeki yedek yol çalıştırılarak denenmedi.

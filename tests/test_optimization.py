@@ -129,3 +129,44 @@ def test_reduction_percent_definition():
     assert core.reduction_percent(0.0, 0.0) is None
     assert core.reduction_percent(1e-12, 0.0) is None
     assert core.reduction_percent(5.0, 5.0 + 1e-12) == 0.0
+
+
+def test_local_refinement_default_window_is_a_single_exhaustive_pass():
+    assert core._local_refinement_stages(5.0, 0.25) == [(5.0, 0.25)]
+    assert core._local_refinement_stages(10.0, 0.25) == [(10.0, 0.25)]
+    parameters = P(mode=3, beta1_deg=20, beta2_deg=30, beta3_deg=25)
+    assert core.local_refinement_evaluation_count(parameters, 0.25) == 41 * 41
+
+
+@pytest.mark.parametrize("coarse, local", [(15.0, 0.05), (5.0, 0.05), (12.0, 0.1)])
+def test_wide_local_refinement_windows_are_staged(coarse, local):
+    """The exhaustive window needed up to 361 345 evaluations (15 deg / 0.05 deg).
+
+    Staging caps every pass at 81 nodes per axis.  The accepted loss against
+    the exhaustive window (0.1 pu) was measured: at most 0.04 pu over 100 runs.
+    """
+
+    stages = core._local_refinement_stages(coarse, local)
+    assert len(stages) >= 2 and stages[-1][1] == local
+    for half_width, step in stages:
+        assert 2.0 * half_width / step + 1.0 <= core.LOCAL_REFINEMENT_MAX_NODES + 1e-9
+    rng = np.random.default_rng(11)
+    for _ in range(4):
+        betas = tuple(float(x) for x in rng.uniform(0.0, 60.0, 3))
+        parameters = P(mode=3, beta1_deg=betas[0], beta2_deg=betas[1], beta3_deg=betas[2],
+                       optimization_step_deg=coarse)
+        analysis = core.calculate_analysis(
+            parameters,
+            optimization_settings=S(method="local_refinement", local_refinement_step_deg=local),
+        )
+        diagnostics = analysis["optimization_diagnostics"]
+        assert diagnostics.function_evaluations < 15000
+        theta = analysis["theta_metric_deg"]
+        coarse_result = analysis["coarse_optimization_result"]
+        exhaustive, _ = core._triple_landscape(
+            core.replace(parameters, optimization_step_deg=local), theta,
+            core._periodic_local_grid(coarse_result.phi1_deg, coarse, local),
+            core._periodic_local_grid(coarse_result.phi2_deg, coarse, local),
+        )
+        staged = analysis["optimization_result"].unevenness_percent
+        assert staged <= exhaustive.unevenness_percent + 0.1

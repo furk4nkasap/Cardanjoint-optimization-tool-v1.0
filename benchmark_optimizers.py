@@ -1,4 +1,4 @@
-"""Reproducible optimizer comparison for Cardan Joint Engineering Tool v1.4.0."""
+"""Reproducible optimizer comparison for Cardan Joint Engineering Tool v1.5.0."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ def main() -> None:
         optimization_step_deg=5.0,
     )
 
-    print("Cardan Joint Engineering Tool v1.4.0 optimizer benchmark")
+    print("Cardan Joint Engineering Tool v1.5.0 optimizer benchmark")
     print(f"Parameters: {parameters}")
     print()
 

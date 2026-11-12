@@ -45,18 +45,28 @@ def test_default_run_both_languages():
     assert _metric(app, "Mevcut düzgünsüzlük").value == "19,71%"
 
 
+def _checkbox(app, key):
+    return [box for box in app.checkbox if box.key == key][0]
+
+
+def _method_selector(app):
+    return [box for box in app.selectbox if box.key == "optimization_method"][0]
+
+
 def test_apply_optimum_then_standard_never_reports_negative_reduction():
-    """Reproduces the documented workflow that produced '-130737.99%'."""
+    """Reproduces the workflow that produced '-130737.99%' in v1.2.4:
+    apply a continuous optimum, then return to the standard method."""
 
     app = _run()
-    ultra = [box for box in app.checkbox if box.key == "ultra_mode"][0]
-    ultra.check().run()
-    _button(app, "Run ultra").click().run()
+    _checkbox(app, "expert_mode").check().run()
+    _method_selector(app).set_value("hybrid").run()
+    _button(app, "Run analysis").click().run()
+    assert app.session_state["analysis_data"]["optimization_result"].method == "hybrid"
     _button(app, "Apply optimum").click().run()
-    ultra = [box for box in app.checkbox if box.key == "ultra_mode"][0]
-    ultra.uncheck().run()
+    _method_selector(app).set_value("exact").run()
     assert not app.exception
     analysis = app.session_state["analysis_data"]
+    assert analysis["optimization_result"].method == "exact"
     assert (
         analysis["optimized_metrics"].unevenness_percent
         <= analysis["current_metrics"].unevenness_percent + 1e-9
@@ -65,6 +75,48 @@ def test_apply_optimum_then_standard_never_reports_negative_reduction():
     assert not reduction.startswith("-")
     delta = _metric(app, "Validated optimum").delta or ""
     assert "--" not in delta
+
+
+def test_standard_method_is_closed_form_and_stochastic_methods_need_expert_mode():
+    app = _run()
+    assert app.session_state["analysis_data"]["optimization_result"].method == "exact"
+    assert not [box for box in app.checkbox if box.key == "ultra_mode"]
+    assert not [box for box in app.selectbox if box.key == "optimization_method"]
+    _checkbox(app, "expert_mode").check().run()
+    selector = _method_selector(app)
+    assert len(selector.options) == 5  # all five methods, shown by their labels
+    # A stochastic method is not refreshed automatically.
+    selector.set_value("differential_evolution").run()
+    assert app.session_state["analysis_data"]["optimization_result"].method == "exact"
+    assert any("Inputs changed" in str(item.value) for item in app.warning)
+
+
+def test_no_deprecated_width_argument_remains():
+    source = Path(APP).read_text(encoding="utf-8")
+    assert "use_container_width=True" not in source
+    assert source.count("**_STRETCH") >= 15
+
+
+def test_curve_csv_keeps_first_columns_and_adds_metadata():
+    import csv as csv_module
+    import runpy
+
+    namespace = runpy.run_path(APP)
+    analysis = namespace["analysis"]
+    parameters = namespace["analyzed_parameters"]
+    data = namespace["_curve_csv"](parameters, analysis, "en").decode("utf-8-sig")
+    rows = list(csv_module.reader(io.StringIO(data)))
+    header = rows[0]
+    assert header[:3] == ["Input angle θ (deg)", "Current speed ratio q", "Optimized speed ratio q"]
+    assert len(header) == 5 + len(namespace["CSV_METADATA_COLUMNS"])
+    assert header[5:] == list(namespace["CSV_METADATA_COLUMNS"])
+    assert len(rows) == 1 + len(analysis["theta_plot_deg"])
+    record = dict(zip(header, rows[1]))
+    assert record["phase_convention"] == "physical_yoke_clocking"
+    assert record["angles_unit"] == "degree"
+    assert record["tool_version"] == namespace["APP_RELEASE"]
+    assert float(record["beta1_deg"]) == parameters.beta1_deg
+    assert all(len(row) == len(header) for row in rows)
 
 
 @pytest.mark.parametrize("mode", [1, 2, 3])

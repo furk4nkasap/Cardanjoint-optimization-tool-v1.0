@@ -49,3 +49,9 @@ Model hiçbir deneysel veriyle karşılaştırılmadı. En düşük eforlu seçe
 - **Yeni iş:** Giriş–çıkış açı sapması genliğinin (`angle_error_amplitude_deg`) arayüzde ve dışa aktarımlarda gösterilmesi; direksiyon uygulamaları bu ölçütü kullanıyor. Efor: K.
 - **Yeni iş:** Fischer ve Paul'ün atıf verdiği kaynakların (Wagner 1979, SAE AE-7; Philipp 1960; Austin, Denavit ve Hartenberg 1965) uzaysal fazlama için incelenmesi. Efor: O; kaynağa erişim gerekir.
 - Sıradaki aşama: Aşama 2 (bakım ve sağlamlık).
+
+## Durum güncellemesi — v1.5.0
+
+- **Tamamlandı (Kısa vade 3, 4, 5, 6 ve Orta vade 12):** CSV üst bilgi sütunları, `width` geçişi, önbellek sınırı, aşamalı yerel inceltme, Ultra kutusunun kaldırılması (yöntemler uzman modunda).
+- **Açık kalan kısa işler:** açı sapması genliğinin arayüzde gösterilmesi; An ve Wang (2017) ile Gao ve Qi (2023) tam metinlerinin okunması.
+- **Sıradaki aşama:** Aşama 3 — üçlü sistemde uzaysal geometri ve alt sınıra ulaşılabilirliğin analitik kanıtı.

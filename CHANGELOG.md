@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.5.0 — Maintenance & Robustness
+
+- Arayüz: "Ultra hassas optimizasyon" kutusu kaldırıldı; standart analiz zaten kanıtlanmış küresel optimumu veriyor. Grid, yerel inceltme, DE ve hibrit yöntemler uzman modunda seçilebilir.
+- Stokastik yöntemler otomatik yenilenmez; "Analizi çalıştır" ile çalıştırılır.
+- CSV: ilk beş sütun aynı kaldı; sağa sürüm, konfigürasyon, açılar, optimum fazlar, birim ve faz konvansiyonu sütunları eklendi.
+- Yerel inceltme: eksen başına 81 düğümü aşan pencereler aşamalı taranır (en kötü durum 361 345 → 7 666 değerlendirme). Varsayılan ayarların sonucu değişmedi; geniş pencerelerde tam taramaya göre ölçülen en büyük fark 0,04 yüzde puanı.
+- `use_container_width` yerine Streamlit ≥ 1.51'de `width="stretch"` kullanılır; eski sürümlerle uyum korunur.
+- Analiz önbelleğine 128 kayıt sınırı kondu.
+- Kullanılmayan çeviri anahtarları silindi.
+
 ## v1.4.0 — Tolerance Sensitivity & Discrete Phasing
 
 - `tolerance_sensitivity`: faz ve mafsal açısı toleransı içinde kapalı-form en kötü düzgünsüzlük.

@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 
 echo =============================================================
-echo  Cardan Joint Engineering Tool v1.4.0 - Dependency Installation
+echo  Cardan Joint Engineering Tool v1.5.0 - Dependency Installation
 echo =============================================================
 
 where py >nul 2>&1

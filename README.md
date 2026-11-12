@@ -2,7 +2,7 @@
 
 Interactive engineering application for the **kinematic analysis, physical yoke-phase optimization, visualization, validation, and export** of single, double, and triple Cardan (Hooke universal-joint) systems.
 
-![Version](https://img.shields.io/badge/version-1.4.0-informational.svg)
+![Version](https://img.shields.io/badge/version-1.5.0-informational.svg)
 ![Python](https://img.shields.io/badge/Python-3.x-blue.svg)
 ![Interface](https://img.shields.io/badge/Interface-Streamlit-success.svg)
 ![Optimization](https://img.shields.io/badge/Optimization-Closed--form%20%7C%20Grid%20%7C%20DE%20%7C%20Powell-orange.svg)
@@ -130,8 +130,8 @@ The sidebar is the main input area of the application.
 | **$\beta_1,\beta_2,\beta_3$** | Defines the angular misalignment between consecutive shaft axes |
 | **$\phi_1,\phi_2$** | Defines the physical clocking angle between adjacent yokes on the shared shaft |
 | **$\theta_0$** | Shifts the initial angular reference of the input shaft |
-| **Analysis quality** | Selects the normal deterministic workflow or the ultra continuous workflow |
-| **Run analysis** | Executes a manual or ultra analysis when automatic updating is disabled |
+| **Advanced settings** | Precision, automatic updating, and expert access to the alternative optimization methods |
+| **Run analysis** | Executes the analysis when automatic updating is disabled or a stochastic method is selected |
 | **Reset inputs** | Restores the default interface values |
 
 ### Misalignment-angle guidance
@@ -331,7 +331,7 @@ The application can generate the following files:
 | Export | Contents |
 |---|---|
 | **Engineering workbook — XLSX** | Summary, inputs, current/optimized comparison, velocity curves, kinematic trajectory, phase landscape, and diagnostics |
-| **Velocity curves — CSV** | Input angle, current ratio, optimized ratio, and associated curve data |
+| **Velocity curves — CSV** | Input angle, current ratio, optimized ratio, speed errors, followed by metadata columns (version, configuration, angles, optimum phases, unit, phase convention) repeated on every row |
 | **Analysis summary — JSON** | Parameters, optimum phases, metrics, and diagnostics |
 | **Kinematic trajectory — JSON** | Joint input/output angles, individual ratios, total ratio, and trajectory data |
 | **3D scene — JSON** | Shaft geometry, axes, rotations, quaternions, and selected scene state |
@@ -658,9 +658,9 @@ The validated value is used in the main engineering-result cards.
 
 The default standard workflow uses the **closed-form exact optimum** (v1.3.0). It is deterministic, needs no angular sampling, and updates automatically when live analysis is enabled. The entered configuration is always kept as a candidate, so the reported optimum is never worse than the current state. **Grid + Local Refinement** remains available in expert mode.
 
-### Ultra-accurate optimization
+### Alternative methods (expert mode)
 
-Ultra mode uses the **Hybrid — Differential Evolution + Powell** workflow. It searches continuous phase values, requires more computation, and is executed manually after input changes.
+Since v1.5.0 there is no separate "ultra" mode: the standard closed-form analysis already returns the certified global optimum. The grid, local-refinement, Differential Evolution and hybrid methods remain selectable in expert mode for comparison. The stochastic methods are not refreshed automatically; press **Run analysis** after changing inputs.
 
 ---
 
@@ -679,7 +679,7 @@ Ultra mode uses the **Hybrid — Differential Evolution + Powell** workflow. It 
 11. Use **Apply optimum** to transfer the optimized phases to the current configuration.
 12. Compare current and optimized motion in **Interactive 3D**.
 13. Inspect optimization sensitivity in **Phase Map**.
-14. Run ultra optimization when a continuous high-accuracy result is required.
+14. Open the tolerance section to check how the optimum behaves under assembly errors.
 15. Download the engineering workbook or raw data from **Data Export**.
 
 ---
@@ -815,14 +815,9 @@ The application should not be used as the sole basis for production design. Prod
 
 The **Advanced settings** panel exposes the controls used to balance speed, repeatability, and numerical accuracy.
 
-## 1. Ultra-Accurate Optimization
+## 1. Standard Analysis
 
-Enables the continuous high-accuracy workflow.
-
-- Default algorithm: **Hybrid — Differential Evolution + Powell**
-- Best suited for: final phase selection and difficult optimization landscapes
-- Behavior: results are not refreshed automatically after every input change; the user runs the analysis manually
-- Trade-off: higher computational cost than standard analysis
+The standard analysis uses the closed-form exact optimum. It needs no angular sampling, is deterministic, and reports whether the global optimum is certified by the analytical lower bound. The former "ultra-accurate" checkbox was removed in v1.5.0 because it no longer improves on the standard result.
 
 ## 2. Use Precise 0.01° Angle Controls
 
@@ -852,10 +847,7 @@ Disable it when repeated recalculation is undesirable or when many parameters wi
 
 Unlocks direct access to all five optimization methods.
 
-Without expert mode:
-
-- Standard analysis selects the **closed-form exact optimum**.
-- Ultra analysis selects **Hybrid — Differential Evolution + Powell**.
+Without expert mode the **closed-form exact optimum** is always used.
 
 With expert mode, the user can select each algorithm independently for research, benchmarking, or reproducibility studies.
 
@@ -1031,8 +1023,8 @@ Available values:
 Typical defaults:
 
 ```text
-Standard analysis: 1,800
-Global/Ultra analysis: 7,200
+Deterministic methods: 1,800
+Stochastic methods: 7,200
 ```
 
 This setting controls the density of the independent validation grid used after optimization.
