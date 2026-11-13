@@ -1,4 +1,4 @@
-# v1.2.4 Dağıtım Kontrolü
+# v1.5.1 Dağıtım Kontrolü
 
 Repo kökünde şu dosyalar birlikte bulunmalıdır:
 
@@ -23,15 +23,15 @@ plotly>=6.5,<7
 
 ## Streamlit Cloud
 
-1. GitHub'a v1.2.4 paketindeki dosyaları birlikte yükleyin.
+1. GitHub'a v1.5.1 paketindeki dosyaları birlikte yükleyin.
 2. Uygulama giriş dosyasını `streamlit_app.py` seçin.
 3. Doğru branch'in yayımlandığını kontrol edin.
 4. Commit sonrası uygulamayı Reboot edin.
 
 ## Sürüm uyumu
 
-- `streamlit_app.py`: v1.2.4
-- `cardan_core.py`: `CORE_API_VERSION = 8`
+- `streamlit_app.py`: v1.5.1
+- `cardan_core.py`: `CORE_API_VERSION = 10`
 - `cardan_3d_viewer.py`: `VIEWER_API_VERSION = 2`
 
 Farklı paketlerden dosyaları karıştırmayın.

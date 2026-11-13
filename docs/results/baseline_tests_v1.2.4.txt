@@ -1,0 +1,22 @@
+Baseline: commit 039da69 (v1.2.4), tests/ of this branch run against the unmodified sources.
+
+      1 FAILED tests/test_app.py::test_apply_optimum_then_standard_never_reports_negative_reduction
+      1 FAILED tests/test_app.py::test_excel_export_carries_phase_convention_and_exact_values
+      1 FAILED tests/test_app.py::test_summary_json_contract
+      1 FAILED tests/test_exact_solution.py::test_constant_velocity_is_exactly_zero_not_noise_amplified
+     40 FAILED tests/test_exact_solution.py::test_double_joint_optimum_is_aligned_yokes
+     60 FAILED tests/test_exact_solution.py::test_exact_bounds_match_independent_svd_and_dense_sampling
+      1 FAILED tests/test_exact_solution.py::test_exact_bounds_remain_accurate_at_high_angles_where_sampling_fails
+      1 FAILED tests/test_exact_solution.py::test_exact_optimum_is_deterministic
+      1 FAILED tests/test_exact_solution.py::test_single_joint_has_no_phase_optimum
+     60 FAILED tests/test_exact_solution.py::test_triple_joint_optimum_reaches_rigorous_lower_bound
+      1 FAILED tests/test_inputs_scene_exports.py::test_geometry_plot_does_not_tilt_layout_with_theta0
+      4 FAILED tests/test_inputs_scene_exports.py::test_invalid_inputs_are_rejected_at_construction
+      1 FAILED tests/test_optimization.py::test_analysis_reports_optimality_gap_against_closed_form
+     12 FAILED tests/test_optimization.py::test_double_joint_boundary_optimum
+      1 FAILED tests/test_optimization.py::test_exact_method_is_at_least_as_good_as_every_other_method
+      1 FAILED tests/test_optimization.py::test_near_zero_baseline_is_flagged_not_divided
+      2 FAILED tests/test_optimization.py::test_optimum_is_never_worse_than_current_configuration
+      1 FAILED tests/test_optimization.py::test_reduction_percent_definition
+
+190 failed, 72 passed in 112.31s (0:01:52)

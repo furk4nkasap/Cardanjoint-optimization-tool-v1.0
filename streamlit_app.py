@@ -1,4 +1,4 @@
-"""Beginner-friendly Streamlit interface for Cardan Joint Engineering Tool v1.2.4."""
+"""Beginner-friendly Streamlit interface for Cardan Joint Engineering Tool v1.5.1."""
 
 from __future__ import annotations
 
@@ -24,6 +24,16 @@ except ModuleNotFoundError:
 
 import cardan_core as core
 
+# Streamlit 1.51 accepts width="stretch" on every element used here and marks
+# use_container_width as deprecated; older releases only know the latter.
+try:
+    _STREAMLIT_VERSION = tuple(int(part) for part in st.__version__.split(".")[:2])
+except (AttributeError, ValueError):
+    _STREAMLIT_VERSION = (0, 0)
+_STRETCH: dict[str, Any] = (
+    {"width": "stretch"} if _STREAMLIT_VERSION >= (1, 51) else {"use_container_width": True}
+)
+
 try:
     import cardan_3d_viewer as viewer3d
 except ModuleNotFoundError:
@@ -36,7 +46,7 @@ except ModuleNotFoundError:
 # Core compatibility
 # ---------------------------------------------------------------------------
 
-_REQUIRED_CORE_API_VERSION = 8
+_REQUIRED_CORE_API_VERSION = 10
 _REQUIRED_CORE_OBJECTS = (
     "CardanMode",
     "CardanParameters",
@@ -54,6 +64,11 @@ _REQUIRED_CORE_OBJECTS = (
     "BETA_WARNING_THRESHOLD_DEG",
     "UI_BETA_MAX_DEG",
     "calculate_analysis",
+    "exact_speed_ratio_bounds",
+    "exact_phase_optimum",
+    "reduction_percent",
+    "tolerance_sensitivity",
+    "discrete_phase_optimum",
     "calculate_planar_scene_geometry",
     "calculate_kinematic_scene",
     "physical_phase_to_model_phase_deg",
@@ -92,12 +107,12 @@ PlotLabels = core.PlotLabels
 UNEVENNESS_LIMIT_PERCENT = core.UNEVENNESS_LIMIT_PERCENT
 
 
-APP_RELEASE = "1.2.4"
+APP_RELEASE = "1.5.1"
 PHYSICAL_PHASE_CONVENTION_VERSION = 1
 
 
 st.set_page_config(
-    page_title="Cardan Joint Engineering Tool v1.2.4",
+    page_title="Cardan Joint Engineering Tool v1.5.1",
     page_icon="⚙️",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -108,7 +123,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "en": {
         "title": "Cardan Joint Engineering Tool",
         "subtitle": "Kinematic analysis, phase optimization, interactive 3D visualization, validation, and export",
-        "version": "Version 1.2.4",
+        "version": "Version 1.5.1",
         "system_parameters": "System Parameters",
         "configuration": "Cardan configuration",
         "mode_single": "1 Cardan — Single",
@@ -207,6 +222,10 @@ The deterministic coarse phase grid is always retained to generate the optimizat
 
 The Hooke-joint speed response repeats every 180°. The optimizer therefore evaluates 360 input-shaft positions over the unique 0°–180° period, preserving the previous 0.5° angular spacing while halving the objective workload. The accepted solution is independently checked on a denser 180° validation grid.
 
+### Closed-form evaluation
+
+The whole joint chain is a single 2x2 linear map acting on (sin θ, cos θ). Its singular values give the exact extremes of the speed ratio, so the unevenness is also reported without angular sampling, together with a rigorous lower bound that certifies the global optimum. The standard analysis uses this closed-form optimum.
+
 ### Kinematic trajectory API
 
 The core exports every joint's input angle, output angle, individual speed ratio, total speed ratio, planar shaft geometry, yoke axes, and unit quaternions. The Interactive 3D tab consumes this renderer-independent scene data without reimplementing the kinematic equations.
@@ -220,7 +239,7 @@ The current model is **kinematic only**. Mass, inertia, torque, bearing reaction
     "tr": {
         "title": "Kardan Mafsalı Mühendislik Aracı",
         "subtitle": "Kinematik analiz, faz optimizasyonu, etkileşimli 3B görselleştirme, doğrulama ve dışa aktarma",
-        "version": "Sürüm 1.2.4",
+        "version": "Sürüm 1.5.1",
         "system_parameters": "Sistem Parametreleri",
         "configuration": "Kardan konfigürasyonu",
         "mode_single": "1 Kardan — Tekli",
@@ -319,6 +338,10 @@ Deterministik kaba faz gridi, optimizasyon haritasını oluşturmak için her y�
 
 Kardan mafsalının hız yanıtı her 180°'de tekrar eder. Bu nedenle optimize edici, benzersiz 0°–180° periyodunda 360 giriş mili konumu kullanır; önceki 0,5° açısal çözünürlük korunurken amaç fonksiyonu yükü yarıya iner. Kabul edilen çözüm daha yoğun ve bağımsız bir 180° doğrulama ağı üzerinde kontrol edilir.
 
+### Kapalı-form değerlendirme
+
+Mafsal zincirinin tamamı (sin θ, cos θ) üzerinde etkiyen tek bir 2x2 doğrusal dönüşümdür. Tekil değerleri hız oranının tam uç değerlerini verir; bu nedenle düzgünsüzlük açısal örnekleme olmadan da raporlanır ve küresel optimumu kanıtlayan kesin bir alt sınır hesaplanır. Standart analiz bu kapalı-form optimumu kullanır.
+
 ### Kinematik yörünge API'si
 
 Çekirdek her mafsalın giriş/çıkış açılarını, ayrı ve toplam hız oranlarını, düzlemsel mil geometrisini, çatal eksenlerini ve birim quaternion değerlerini üretir. Etkileşimli 3B sekmesi, kinematik denklemleri yeniden yazmadan bu renderer bağımsız sahne verisini kullanır.
@@ -333,26 +356,21 @@ Mevcut model **yalnızca kinematiktir**. Kütle, atalet, tork, yatak tepkileri, 
 
 
 TRANSLATIONS["en"].update({
-    "version": "Version 1.2.4",
+    "version": "Version 1.5.1",
     "language": "Language / Dil",
     "language_english": "English",
     "language_turkish": "Türkçe",
     "analysis_quality": "Analysis Quality",
     "standard_mode": "Standard analysis",
-    "ultra_mode": "Ultra-accurate optimization",
     "standard_note": "Fast deterministic analysis. Results update automatically when inputs change.",
-    "ultra_note": "Continuous global optimization. Run it manually after changing inputs.",
     "advanced_settings": "Advanced settings",
     "expert_mode": "Show expert algorithm controls",
     "expert_help": "Expose all four core optimization methods for benchmarking and research.",
-    "live_analysis": "Update standard analysis automatically",
+    "live_analysis": "Update analysis automatically",
     "precise_angles": "Use precise 0.01° angle controls",
-    "run_ultra": "Run ultra optimization",
     "run_manual": "Run analysis",
     "analysis_complete": "Analysis completed",
     "analysis_mode": "Mode",
-    "standard_label": "Standard",
-    "ultra_label": "Ultra",
     "advanced_metrics": "Advanced engineering metrics",
     "advanced_diagnostics": "Optimization and validation details",
     "export_excel": "Download engineering workbook (Excel)",
@@ -365,7 +383,8 @@ TRANSLATIONS["en"].update({
     "validation_good": "Dense validation agrees with the optimizer objective.",
     "precision_note": "Full numerical precision is retained in calculations and exported files.",
     "initial_instruction": "Set the system parameters. Standard analysis runs automatically.",
-    "stale_warning": "Inputs changed. Run the selected manual/ultra analysis to refresh the results.",
+    "stale_warning": "Inputs changed. Run the analysis to refresh the results.",
+    "manual_note": "Stochastic methods are not refreshed automatically; press Run analysis after changing inputs.",
     "viewer_configuration": "3D configuration",
     "viewer_current": "Current configuration",
     "viewer_optimized": "Optimized configuration",
@@ -386,29 +405,50 @@ TRANSLATIONS["en"].update({
     "viewer_planar_info": "This view places consecutive shafts in one common plane. Entered beta angles and physical yoke phases are preserved, but horizontal and vertical directions from a real vehicle installation are not reconstructed.",
     "viewer_instructions": "Use the mouse to orbit, pan, and zoom. Press Play or drag the θ slider to inspect one complete input-shaft revolution.",
     "export_scene": "Download 3D scene data (JSON)",
+    "method_exact": "Closed-form exact optimum",
+    "standard_note": "Closed-form exact analysis. Results update automatically when inputs change.",
+    "already_optimal": "The current phases are already optimal for these joint angles; no candidate improves them.",
+    "exact_value": "Closed-form value (no sampling)",
+    "exact_optimum_value": "Closed-form global optimum",
+    "optimality_gap": "Gap to the global optimum",
+    "certified": "Global optimum certified by the analytical lower bound",
+    "not_certified": "Global optimality not certified",
+    "phase_reference_note": "Physical reference: 0° = aligned yokes · 90° = perpendicular yokes · positive φ turns the downstream yoke clockwise when looking from input to output. Use the same sense for φ₁ and φ₂.",
+    "tolerance_title": "Assembly tolerance and spline indexing",
+    "tolerance_note": "Worst closed-form unevenness when the yoke phases and joint angles deviate from their nominal values. Kinematic model only.",
+    "phase_tolerance": "Phase tolerance ± (deg)",
+    "beta_tolerance": "Joint-angle tolerance ± (deg)",
+    "tolerance_nominal": "Nominal",
+    "tolerance_worst_phase": "Worst case, phase error only",
+    "tolerance_worst_beta": "Worst case, joint-angle error only",
+    "tolerance_worst_combined": "Worst case, both",
+    "discrete_title": "Phases reachable with a splined connection",
+    "discrete_note": "Tooth 0 is taken as the aligned position; one tooth turns the yoke by 360°/N. Enter 0 to switch this off.",
+    "teeth_1": "Spline teeth, shaft 2 (φ₁)",
+    "teeth_2": "Spline teeth, shaft 3 (φ₂)",
+    "discrete_rank": "Rank",
+    "discrete_unevenness": "Unevenness",
+    "discrete_summary": "Best reachable: {best} · continuous optimum: {continuous}",
+    "phase_convention_label": "Phase convention",
+    "phase_convention_value": "physical_yoke_clocking: 0 deg = aligned yokes, 90 deg = perpendicular yokes (unit: degree)",
 })
 
 TRANSLATIONS["tr"].update({
-    "version": "Sürüm 1.2.4",
+    "version": "Sürüm 1.5.1",
     "language": "Dil / Language",
     "language_english": "English",
     "language_turkish": "Türkçe",
     "analysis_quality": "Analiz Kalitesi",
     "standard_mode": "Standart analiz",
-    "ultra_mode": "Ultra hassas optimizasyon",
     "standard_note": "Hızlı ve deterministik analiz. Girişler değiştiğinde sonuçlar otomatik yenilenir.",
-    "ultra_note": "Sürekli global optimizasyon. Girişleri değiştirdikten sonra elle çalıştırılır.",
     "advanced_settings": "Gelişmiş ayarlar",
     "expert_mode": "Uzman algoritma kontrollerini göster",
     "expert_help": "Karşılaştırma ve araştırma için çekirdekteki dört optimizasyon yöntemini açar.",
-    "live_analysis": "Standart analizi otomatik güncelle",
+    "live_analysis": "Analizi otomatik güncelle",
     "precise_angles": "Hassas 0,01° açı kontrollerini kullan",
-    "run_ultra": "Ultra optimizasyonu çalıştır",
     "run_manual": "Analizi çalıştır",
     "analysis_complete": "Analiz tamamlandı",
     "analysis_mode": "Mod",
-    "standard_label": "Standart",
-    "ultra_label": "Ultra",
     "advanced_metrics": "Gelişmiş mühendislik metrikleri",
     "advanced_diagnostics": "Optimizasyon ve doğrulama ayrıntıları",
     "export_excel": "Mühendislik çalışma kitabını indir (Excel)",
@@ -421,7 +461,8 @@ TRANSLATIONS["tr"].update({
     "validation_good": "Yoğun doğrulama ile optimize edici amaç değeri uyumludur.",
     "precision_note": "Hesaplamalarda ve dışa aktarılan dosyalarda tam sayısal hassasiyet korunur.",
     "initial_instruction": "Sistem parametrelerini ayarlayın. Standart analiz otomatik çalışır.",
-    "stale_warning": "Girişler değişti. Sonuçları yenilemek için seçilen manuel/ultra analizi çalıştırın.",
+    "stale_warning": "Girişler değişti. Sonuçları yenilemek için analizi çalıştırın.",
+    "manual_note": "Stokastik yöntemler otomatik yenilenmez; girişleri değiştirdikten sonra Analizi çalıştır düğmesine basın.",
     "viewer_configuration": "3B konfigürasyon",
     "viewer_current": "Mevcut konfigürasyon",
     "viewer_optimized": "Optimize edilmiş konfigürasyon",
@@ -442,6 +483,32 @@ TRANSLATIONS["tr"].update({
     "viewer_planar_info": "Bu görünüm ardışık milleri ortak bir düzlemde yerleştirir. Girilen beta açıları ve fiziksel çatal fazları korunur; ancak gerçek araç yerleşimindeki yatay ve düşey yönler yeniden oluşturulmaz.",
     "viewer_instructions": "Fareyle kamerayı döndürebilir, kaydırabilir ve yakınlaştırabilirsiniz. Bir tam giriş mili devrini incelemek için Oynat'a basın veya θ kaydırıcısını sürükleyin.",
     "export_scene": "3B sahne verisini indir (JSON)",
+    "method_exact": "Kapalı-form tam optimum",
+    "standard_note": "Kapalı-form tam analiz. Girişler değiştiğinde sonuçlar otomatik yenilenir.",
+    "already_optimal": "Mevcut fazlar bu mafsal açıları için zaten optimumdur; hiçbir aday daha iyi sonuç vermiyor.",
+    "exact_value": "Kapalı-form değer (örneklemesiz)",
+    "exact_optimum_value": "Kapalı-form küresel optimum",
+    "optimality_gap": "Küresel optimuma uzaklık",
+    "certified": "Küresel optimum analitik alt sınırla kanıtlandı",
+    "not_certified": "Küresel optimum kanıtlanamadı",
+    "phase_reference_note": "Fiziksel referans: 0° = hizalı çatallar · 90° = dik çatallar · pozitif φ, girişten çıkışa doğru bakıldığında sonraki çatalı saat yönünde döndürür. φ₁ ve φ₂ için aynı yön kuralını kullanın.",
+    "tolerance_title": "Montaj toleransı ve spline indeksleme",
+    "tolerance_note": "Çatal fazları ve mafsal açıları nominal değerlerinden saptığında kapalı-form en kötü düzgünsüzlük. Yalnızca kinematik model.",
+    "phase_tolerance": "Faz toleransı ± (derece)",
+    "beta_tolerance": "Mafsal açısı toleransı ± (derece)",
+    "tolerance_nominal": "Nominal",
+    "tolerance_worst_phase": "En kötü durum, yalnız faz hatası",
+    "tolerance_worst_beta": "En kötü durum, yalnız mafsal açısı hatası",
+    "tolerance_worst_combined": "En kötü durum, ikisi birlikte",
+    "discrete_title": "Spline bağlantıyla ulaşılabilen fazlar",
+    "discrete_note": "0 numaralı diş hizalı konum kabul edilir; bir diş çatalı 360°/N döndürür. Kapatmak için 0 girin.",
+    "teeth_1": "Spline diş sayısı, mil 2 (φ₁)",
+    "teeth_2": "Spline diş sayısı, mil 3 (φ₂)",
+    "discrete_rank": "Sıra",
+    "discrete_unevenness": "Düzgünsüzlük",
+    "discrete_summary": "Ulaşılabilen en iyi: {best} · sürekli optimum: {continuous}",
+    "phase_convention_label": "Faz konvansiyonu",
+    "phase_convention_value": "physical_yoke_clocking: 0 derece = hizalı çatallar (aligned), 90 derece = dik çatallar (birim: derece)",
 })
 
 
@@ -728,11 +795,10 @@ def _reset_inputs() -> None:
         ("optimization_step_deg", 5.0), ("theta0_deg", 0.0),
     ):
         _set_angle_state(key, value)
-    st.session_state.ultra_mode = False
     st.session_state.expert_mode = False
     st.session_state.live_analysis = True
     st.session_state.precise_angles = False
-    st.session_state.optimization_method = OptimizationMethod.LOCAL_REFINEMENT.value
+    st.session_state.optimization_method = OptimizationMethod.EXACT.value
     st.session_state.local_refinement_step_deg = 0.25
     st.session_state.de_max_iterations = 80
     st.session_state.de_population_size = 12
@@ -742,15 +808,6 @@ def _reset_inputs() -> None:
     st.session_state.de_polish = False
     st.session_state.analysis_data = None
     st.session_state.analysis_signature = None
-
-
-def _on_ultra_mode_change() -> None:
-    enabled = bool(st.session_state.get("ultra_mode", False))
-    st.session_state.validation_sample_count = 7200 if enabled else 1800
-    st.session_state.optimization_method = (
-        OptimizationMethod.HYBRID.value
-        if enabled else OptimizationMethod.LOCAL_REFINEMENT.value
-    )
 
 
 def _on_precision_change() -> None:
@@ -838,11 +895,37 @@ def _build_signature(
     )
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, max_entries=128)
 def _cached_analysis(signature: tuple[Any, ...]) -> dict[str, Any]:
     return core.calculate_analysis(
         _signature_to_parameters(signature),
         optimization_settings=_signature_to_settings(signature),
+    )
+
+
+def _parameter_key(parameters: CardanParameters) -> tuple[tuple[str, Any], ...]:
+    return tuple(core.parameters_to_dict(parameters).items())
+
+
+@st.cache_data(show_spinner=False, max_entries=256)
+def _cached_tolerance(
+    parameter_key: tuple[tuple[str, Any], ...],
+    phase_tolerance_deg: float,
+    beta_tolerance_deg: float,
+) -> core.ToleranceSensitivity:
+    return core.tolerance_sensitivity(
+        CardanParameters(**dict(parameter_key)), phase_tolerance_deg, beta_tolerance_deg
+    )
+
+
+@st.cache_data(show_spinner=False, max_entries=256)
+def _cached_discrete(
+    parameter_key: tuple[tuple[str, Any], ...],
+    tooth_count_1: int,
+    tooth_count_2: int | None,
+) -> core.DiscretePhaseOptimum:
+    return core.discrete_phase_optimum(
+        CardanParameters(**dict(parameter_key)), tooth_count_1, tooth_count_2
     )
 
 
@@ -863,6 +946,21 @@ def _format_percent(value: float, language_code: str, decimals: int = 2) -> str:
     return f"{_format_decimal(value, decimals, language_code)}%"
 
 
+def _format_reduction(value: float | None, language_code: str) -> str:
+    """Relative reduction; undefined (None) when the baseline is ~constant velocity."""
+
+    return "—" if value is None else _format_percent(value, language_code)
+
+
+def _format_delta_points(change: float, language_code: str) -> str:
+    """Signed change of unevenness in percentage points (negative = improvement)."""
+
+    if abs(float(change)) < 0.005:
+        return f"{_format_decimal(0.0, 2, language_code)} pu"
+    sign = "-" if change < 0.0 else "+"
+    return f"{sign}{_format_decimal(abs(float(change)), 2, language_code)} pu"
+
+
 def _format_degree(value: float | None, language_code: str, decimals: int = 2) -> str:
     if value is None:
         return "—"
@@ -877,16 +975,45 @@ def _status_text(value: float, text: dict[str, str]) -> str:
     return text["status_ok"] if value <= UNEVENNESS_LIMIT_PERCENT else text["status_warning"]
 
 
+def _method_short_text(method: str, language_code: str) -> str:
+    """Short method name that fits a metric tile; the full name is its tooltip."""
+
+    turkish = language_code == "tr"
+    return {
+        OptimizationMethod.EXACT.value: "Kapalı-form" if turkish else "Closed-form",
+        OptimizationMethod.GRID.value: "Grid",
+        OptimizationMethod.LOCAL_REFINEMENT.value: "Grid + yerel" if turkish else "Grid + local",
+        OptimizationMethod.DIFFERENTIAL_EVOLUTION.value: "DE",
+        OptimizationMethod.HYBRID.value: "DE + Powell",
+    }.get(method, method)
+
+
 def _method_text(method: str, text: dict[str, str]) -> str:
     return {
         OptimizationMethod.GRID.value: text["method_grid"],
         OptimizationMethod.LOCAL_REFINEMENT.value: text["method_local"],
         OptimizationMethod.DIFFERENTIAL_EVOLUTION.value: text["method_de"],
         OptimizationMethod.HYBRID.value: text["method_hybrid"],
+        OptimizationMethod.EXACT.value: text["method_exact"],
     }.get(method, method)
 
 
-def _curve_csv(analysis: dict[str, Any], language_code: str) -> bytes:
+CSV_METADATA_COLUMNS = (
+    "tool_version", "mode", "beta1_deg", "beta2_deg", "beta3_deg",
+    "phi1_deg", "phi2_deg", "theta0_deg", "optimized_phi1_deg", "optimized_phi2_deg",
+    "angles_unit", "phase_convention",
+)
+
+
+def _curve_csv(
+    parameters: CardanParameters, analysis: dict[str, Any], language_code: str
+) -> bytes:
+    """Curve data; the first five columns are unchanged since v1.2.
+
+    Columns six onward repeat the run metadata on every row so that the file
+    can be interpreted on its own.  Their names are language independent.
+    """
+
     text = TRANSLATIONS[language_code]
     buffer = io.StringIO()
     writer = csv.writer(buffer)
@@ -894,7 +1021,17 @@ def _curve_csv(analysis: dict[str, Any], language_code: str) -> bytes:
         text["preview_theta"], text["preview_current"], text["preview_optimized"],
         "Mevcut hız hatası (%)" if language_code == "tr" else "Current speed error (%)",
         "Optimize edilmiş hız hatası (%)" if language_code == "tr" else "Optimized speed error (%)",
+        *CSV_METADATA_COLUMNS,
     ])
+    optimum = analysis["optimization_result"]
+    metadata = [
+        APP_RELEASE, int(parameters.mode),
+        f"{parameters.beta1_deg:.6f}", f"{parameters.beta2_deg:.6f}", f"{parameters.beta3_deg:.6f}",
+        f"{parameters.phi1_deg:.6f}", f"{parameters.phi2_deg:.6f}", f"{parameters.theta0_deg:.6f}",
+        "" if optimum.phi1_deg is None else f"{optimum.phi1_deg:.9f}",
+        "" if optimum.phi2_deg is None else f"{optimum.phi2_deg:.9f}",
+        core.ANGLE_UNIT, core.PhaseConvention.PHYSICAL_YOKE_CLOCKING.value,
+    ]
     current_mean = analysis["current_metrics"].q_mean
     optimized_mean = analysis["optimized_metrics"].q_mean
     for theta, current, optimized in zip(
@@ -906,6 +1043,7 @@ def _curve_csv(analysis: dict[str, Any], language_code: str) -> bytes:
             f"{float(theta):.6f}", f"{float(current):.10f}", f"{float(optimized):.10f}",
             f"{100.0 * (float(current) / current_mean - 1.0):.8f}",
             f"{100.0 * (float(optimized) / optimized_mean - 1.0):.8f}",
+            *metadata,
         ])
     return buffer.getvalue().encode("utf-8-sig")
 
@@ -1015,6 +1153,26 @@ def _summary_json(parameters: CardanParameters, analysis: dict[str, Any]) -> byt
             "objective_unevenness_percent": result.unevenness_percent,
         },
         "diagnostics": asdict(diagnostics),
+        "tolerance_sensitivity": {
+            "note": "Worst closed-form unevenness on a grid of the +- tolerance box.",
+            "current": asdict(_cached_tolerance(
+                _parameter_key(parameters),
+                float(st.session_state.get("phase_tolerance_deg", 1.0)),
+                float(st.session_state.get("beta_tolerance_deg", 1.0)),
+            )),
+            "optimized": asdict(_cached_tolerance(
+                _parameter_key(analysis["optimized_parameters"]),
+                float(st.session_state.get("phase_tolerance_deg", 1.0)),
+                float(st.session_state.get("beta_tolerance_deg", 1.0)),
+            )),
+        },
+        "closed_form": {
+            "current": asdict(analysis["exact_current"]),
+            "optimized": asdict(analysis["exact_optimized"]),
+            "global_optimum": asdict(analysis["exact_optimum"]),
+            "optimality_gap_percent": analysis["optimality_gap_percent"],
+            "current_is_optimal": analysis["current_is_optimal"],
+        },
         "scope": "Ideal rigid kinematic model; dynamic and structural effects excluded.",
     }
     return json.dumps(payload, indent=2, ensure_ascii=False).encode("utf-8")
@@ -1065,10 +1223,8 @@ def _excel_workbook(
     diagnostics = analysis["optimization_diagnostics"]
     current = analysis["current_metrics"]
     optimized = analysis["optimized_metrics"]
-    reduction = (
-        100.0 * (current.unevenness_percent - optimized.unevenness_percent)
-        / current.unevenness_percent
-        if current.unevenness_percent > 1.0e-12 else 0.0
+    reduction = core.reduction_percent(
+        current.unevenness_percent, optimized.unevenness_percent
     )
 
     summary_name = "Özet" if language_code == "tr" else "Summary"
@@ -1117,6 +1273,16 @@ def _excel_workbook(
     for row, (label, value) in enumerate(input_rows, start=3):
         wi.write(row, 0, label, label_fmt)
         wi.write(row, 1, value, degree_fmt)
+    convention_row = 3 + len(input_rows)
+    wi.write(convention_row, 0, text["configuration"], label_fmt)
+    wi.write(
+        convention_row, 1,
+        {1: text["mode_single"], 2: text["mode_double"], 3: text["mode_triple"]}[int(parameters.mode)],
+        value_fmt,
+    )
+    wi.write(convention_row + 1, 0, text["phase_convention_label"], label_fmt)
+    wi.write(convention_row + 1, 1, text["phase_convention_value"], value_fmt)
+    wi.set_column("B:B", 78)
 
     # Current vs optimized metrics.
     comp_name = "Karşılaştırma" if language_code == "tr" else "Comparison"
@@ -1250,6 +1416,13 @@ def _excel_workbook(
         (text["validation_value"], diagnostics.validated_unevenness_percent),
         (text["validation_delta"], diagnostics.validation_delta_percent),
         (text["validation_samples"], diagnostics.validation_sample_count),
+        (text["exact_value"], analysis["exact_optimized"].unevenness_percent),
+        (text["exact_optimum_value"], analysis["exact_optimum"].unevenness_percent),
+        (text["optimality_gap"], analysis["optimality_gap_percent"]),
+        (
+            text["convergence"] + " (2)",
+            text["certified"] if analysis["exact_optimum"].certified_global else text["not_certified"],
+        ),
         (text["random_seed"], diagnostics.random_seed),
         (text["diagnostic_message"], diagnostics.message),
     ]
@@ -1316,8 +1489,6 @@ if "analysis_signature" not in st.session_state:
     st.session_state.analysis_signature = None
 if "auto_run_after_apply" not in st.session_state:
     st.session_state.auto_run_after_apply = False
-if "ultra_mode" not in st.session_state:
-    st.session_state.ultra_mode = False
 if "expert_mode" not in st.session_state:
     st.session_state.expert_mode = False
 if "live_analysis" not in st.session_state:
@@ -1426,7 +1597,7 @@ with st.sidebar:
 
     optimization_step_deg = 5.0
     local_step = 0.25
-    method_value = OptimizationMethod.LOCAL_REFINEMENT.value
+    method_value = OptimizationMethod.EXACT.value
     de_max_iterations = 80
     de_population_size = 12
     de_tolerance = 1.0e-7
@@ -1434,23 +1605,14 @@ with st.sidebar:
     validation_sample_count = 1800
     de_polish = False
 
-    ultra_mode = bool(st.session_state.ultra_mode) if mode >= CardanMode.DOUBLE else False
     if mode >= CardanMode.DOUBLE:
-        st.caption(text["ultra_note"] if ultra_mode else text["standard_note"])
+        st.caption(text["standard_note"])
 
     with st.expander(text["advanced_settings"], expanded=False):
-        if mode >= CardanMode.DOUBLE:
-            ultra_mode = bool(st.checkbox(
-                text["ultra_mode"], key="ultra_mode", help=text["ultra_note"],
-                on_change=_on_ultra_mode_change,
-            ))
-        else:
-            ultra_mode = False
         st.checkbox(
             text["precise_angles"], key="precise_angles", on_change=_on_precision_change
         )
-        if not ultra_mode:
-            st.checkbox(text["live_analysis"], key="live_analysis")
+        st.checkbox(text["live_analysis"], key="live_analysis")
         expert_mode = bool(st.checkbox(
             text["expert_mode"], value=False, key="expert_mode", help=text["expert_help"]
         ))
@@ -1467,21 +1629,24 @@ with st.sidebar:
             format_func=lambda value: f"{value:.2f}°",
         ))
 
-        if expert_mode:
+        # The closed-form optimum is the standard method.  The sampled and
+        # stochastic methods remain available for comparison in expert mode.
+        if expert_mode and mode >= CardanMode.DOUBLE:
             method_options = [item.value for item in OptimizationMethod]
-            default_method = OptimizationMethod.HYBRID.value if ultra_mode else OptimizationMethod.LOCAL_REFINEMENT.value
             if st.session_state.get("optimization_method") not in method_options:
-                st.session_state.optimization_method = default_method
+                st.session_state.optimization_method = OptimizationMethod.EXACT.value
             method_value = st.selectbox(
-                text["method"], options=method_options,
-                index=method_options.index(default_method), key="optimization_method",
+                text["method"], options=method_options, key="optimization_method",
                 format_func=lambda value: _method_text(value, text), help=text["method_help"],
             )
         else:
-            method_value = (
-                OptimizationMethod.HYBRID.value if ultra_mode
-                else OptimizationMethod.LOCAL_REFINEMENT.value
-            )
+            method_value = OptimizationMethod.EXACT.value
+        manual_method = method_value in {
+            OptimizationMethod.DIFFERENTIAL_EVOLUTION.value,
+            OptimizationMethod.HYBRID.value,
+        }
+        if manual_method:
+            st.caption(text["manual_note"])
 
         if method_value in {
             OptimizationMethod.DIFFERENTIAL_EVOLUTION.value,
@@ -1514,9 +1679,8 @@ with st.sidebar:
             format_func=lambda value: _format_integer(int(value), language_code),
         ))
 
-    run_label = text["run_ultra"] if ultra_mode else text["run_manual"]
-    run_button = st.button(run_label, type="primary", use_container_width=True)
-    st.button(text["reset_inputs"], use_container_width=True, on_click=_reset_inputs)
+    run_button = st.button(text["run_manual"], type="primary", **_STRETCH)
+    st.button(text["reset_inputs"], **_STRETCH, on_click=_reset_inputs)
 
 parameters = CardanParameters(
     mode=mode, beta1_deg=beta1_deg, beta2_deg=beta2_deg, beta3_deg=beta3_deg,
@@ -1536,7 +1700,7 @@ settings = OptimizationSettings(
 current_signature = _build_signature(parameters, settings)
 
 standard_auto_run = (
-    not ultra_mode and bool(st.session_state.live_analysis)
+    not manual_method and bool(st.session_state.live_analysis)
 )
 should_run = run_button or standard_auto_run or st.session_state.auto_run_after_apply
 if should_run:
@@ -1561,13 +1725,13 @@ else:
     diagnostics = analysis["optimization_diagnostics"]
     optimized_parameters = analysis["optimized_parameters"]
     reduction_points = current_metrics.unevenness_percent - optimized_metrics.unevenness_percent
-    reduction_percent = (
-        100.0 * reduction_points / current_metrics.unevenness_percent
-        if current_metrics.unevenness_percent > 1.0e-12 else 0.0
+    reduction_percent = core.reduction_percent(
+        current_metrics.unevenness_percent, optimized_metrics.unevenness_percent
     )
-    display_mode = text["ultra_label"] if result.method in {
-        OptimizationMethod.DIFFERENTIAL_EVOLUTION.value, OptimizationMethod.HYBRID.value
-    } else text["standard_label"]
+    exact_current = analysis["exact_current"]
+    exact_optimized = analysis["exact_optimized"]
+    exact_optimum = analysis["exact_optimum"]
+    display_mode = _method_text(result.method, text)
 
     tabs = st.tabs([
         text["overview"], text["velocity"], text["geometry_phase"],
@@ -1581,9 +1745,9 @@ else:
         )
         summary_columns[1].metric(
             text["optimized_unevenness"], _format_percent(optimized_metrics.unevenness_percent, language_code),
-            delta=f"-{_format_decimal(reduction_points, 2, language_code)} pu", delta_color="inverse",
+            delta=_format_delta_points(-reduction_points, language_code), delta_color="inverse",
         )
-        summary_columns[2].metric(text["reduction"], _format_percent(reduction_percent, language_code))
+        summary_columns[2].metric(text["reduction"], _format_reduction(reduction_percent, language_code))
         summary_columns[3].metric(text["optimized_status"], _status_text(optimized_metrics.unevenness_percent, text))
 
         if analyzed_parameters.mode is CardanMode.SINGLE:
@@ -1593,11 +1757,16 @@ else:
             phase_columns = st.columns(3)
             phase_columns[0].metric(text["optimum_phi1"], _format_degree(result.phi1_deg, language_code))
             phase_columns[1].metric(text["optimum_phi2"], _format_degree(result.phi2_deg, language_code))
-            phase_columns[2].metric(text["analysis_mode"], display_mode)
+            phase_columns[2].metric(
+                text["analysis_mode"], _method_short_text(result.method, language_code),
+                help=display_mode,
+            )
             st.button(
                 text["apply_optimum"], type="primary", on_click=_apply_optimum,
-                use_container_width=True, disabled=stale_results,
+                **_STRETCH, disabled=stale_results,
             )
+            if analysis["current_is_optimal"]:
+                st.info(text["already_optimal"])
 
         st.success(
             f"{text['analysis_complete']} · {text['analysis_mode']}: {display_mode} · "
@@ -1623,14 +1792,23 @@ else:
                 if analyzed_parameters.mode is not CardanMode.SINGLE else "—",
             )
             validation_table = {
-                text["metric"]: [text["objective_value"], text["validation_value"], text["validation_delta"]],
+                text["metric"]: [
+                    text["objective_value"], text["validation_value"], text["validation_delta"],
+                    text["exact_value"], text["exact_optimum_value"], text["optimality_gap"],
+                ],
                 text["optimized"]: [
                     _format_percent(diagnostics.objective_unevenness_percent, language_code, 4),
                     _format_percent(diagnostics.validated_unevenness_percent, language_code, 4),
                     f"{_format_decimal(diagnostics.validation_delta_percent, 4, language_code)} pu",
+                    _format_percent(exact_optimized.unevenness_percent, language_code, 4),
+                    _format_percent(exact_optimum.unevenness_percent, language_code, 4),
+                    f"{_format_decimal(analysis['optimality_gap_percent'], 4, language_code)} pu",
                 ],
             }
-            st.dataframe(validation_table, use_container_width=True, hide_index=True)
+            st.dataframe(validation_table, **_STRETCH, hide_index=True)
+            st.caption(
+                text["certified"] if exact_optimum.certified_global else text["not_certified"]
+            )
             coarse_text = f"φ₁={_format_degree(result.coarse_phi1_deg, language_code)}"
             if result.coarse_phi2_deg is not None:
                 coarse_text += f", φ₂={_format_degree(result.coarse_phi2_deg, language_code)}"
@@ -1638,12 +1816,91 @@ else:
             with st.expander(text["diagnostic_message"], expanded=False):
                 st.code(diagnostics.message, language="text")
 
+        with st.expander(text["tolerance_title"], expanded=False):
+            st.caption(text["tolerance_note"])
+            tolerance_columns = st.columns(2)
+            phase_tolerance = float(tolerance_columns[0].number_input(
+                text["phase_tolerance"], min_value=0.0, max_value=10.0, value=1.0,
+                step=0.25, key="phase_tolerance_deg",
+            ))
+            beta_tolerance = float(tolerance_columns[1].number_input(
+                text["beta_tolerance"], min_value=0.0, max_value=5.0, value=1.0,
+                step=0.25, key="beta_tolerance_deg",
+            ))
+            sensitivity_current = _cached_tolerance(
+                _parameter_key(analyzed_parameters), phase_tolerance, beta_tolerance
+            )
+            sensitivity_optimized = _cached_tolerance(
+                _parameter_key(optimized_parameters), phase_tolerance, beta_tolerance
+            )
+            st.dataframe(
+                {
+                    text["metric"]: [
+                        text["tolerance_nominal"], text["tolerance_worst_phase"],
+                        text["tolerance_worst_beta"], text["tolerance_worst_combined"],
+                    ],
+                    text["current"]: [
+                        _format_percent(value, language_code) for value in (
+                            sensitivity_current.nominal_unevenness_percent,
+                            sensitivity_current.worst_phase_unevenness_percent,
+                            sensitivity_current.worst_beta_unevenness_percent,
+                            sensitivity_current.worst_combined_unevenness_percent,
+                        )
+                    ],
+                    text["optimized"]: [
+                        _format_percent(value, language_code) for value in (
+                            sensitivity_optimized.nominal_unevenness_percent,
+                            sensitivity_optimized.worst_phase_unevenness_percent,
+                            sensitivity_optimized.worst_beta_unevenness_percent,
+                            sensitivity_optimized.worst_combined_unevenness_percent,
+                        )
+                    ],
+                },
+                **_STRETCH, hide_index=True,
+            )
+
+            if analyzed_parameters.mode is not CardanMode.SINGLE:
+                st.markdown(f"**{text['discrete_title']}**")
+                st.caption(text["discrete_note"])
+                teeth_columns = st.columns(2)
+                teeth_1 = int(teeth_columns[0].number_input(
+                    text["teeth_1"], min_value=0, max_value=200, value=0, step=1,
+                    key="spline_teeth_1",
+                ))
+                teeth_2 = None
+                if analyzed_parameters.mode is CardanMode.TRIPLE:
+                    teeth_2 = int(teeth_columns[1].number_input(
+                        text["teeth_2"], min_value=0, max_value=200, value=0, step=1,
+                        key="spline_teeth_2",
+                    ))
+                if teeth_1 >= 1 and (teeth_2 is None or teeth_2 >= 1):
+                    discrete = _cached_discrete(
+                        _parameter_key(analyzed_parameters), teeth_1, teeth_2
+                    )
+                    top_options = discrete.options[:5]
+                    st.dataframe(
+                        {
+                            text["discrete_rank"]: [str(index + 1) for index in range(len(top_options))],
+                            "φ₁": [_format_degree(item.phi1_deg, language_code) for item in top_options],
+                            "φ₂": [_format_degree(item.phi2_deg, language_code) for item in top_options],
+                            text["discrete_unevenness"]: [
+                                _format_percent(item.unevenness_percent, language_code)
+                                for item in top_options
+                            ],
+                        },
+                        **_STRETCH, hide_index=True,
+                    )
+                    st.caption(text["discrete_summary"].format(
+                        best=_format_percent(discrete.best.unevenness_percent, language_code),
+                        continuous=_format_percent(discrete.continuous_optimum_percent, language_code),
+                    ))
+
     with tabs[1]:
         velocity_figure, _, _ = core.plot_velocity_ratio(
             analyzed_parameters, labels=plot_labels, analysis=analysis,
         )
         style_figure_for_dark_theme(velocity_figure)
-        st.pyplot(velocity_figure, use_container_width=True)
+        st.pyplot(velocity_figure, **_STRETCH)
         plt.close(velocity_figure)
 
     with tabs[2]:
@@ -1652,7 +1909,7 @@ else:
         with geometry_column:
             geometry_figure = core.plot_geometry_2d(analyzed_parameters, labels=plot_labels)
             style_figure_for_dark_theme(geometry_figure)
-            st.pyplot(geometry_figure, use_container_width=True)
+            st.pyplot(geometry_figure, **_STRETCH)
             plt.close(geometry_figure)
         if analyzed_parameters.mode is not CardanMode.SINGLE:
             current_column, optimized_column = st.columns(2)
@@ -1661,14 +1918,14 @@ else:
                 figure = core.plot_phase_figure(analyzed_parameters, labels=plot_labels)
                 if figure is not None:
                     style_figure_for_dark_theme(figure)
-                    st.pyplot(figure, use_container_width=True)
+                    st.pyplot(figure, **_STRETCH)
                     plt.close(figure)
             with optimized_column:
                 st.markdown(f"#### {text['optimized_phase']}")
                 figure = core.plot_phase_figure(optimized_parameters, labels=plot_labels)
                 if figure is not None:
                     style_figure_for_dark_theme(figure)
-                    st.pyplot(figure, use_container_width=True)
+                    st.pyplot(figure, **_STRETCH)
                     plt.close(figure)
 
     with tabs[3]:
@@ -1735,7 +1992,7 @@ else:
             )
             st.plotly_chart(
                 viewer_figure,
-                use_container_width=True,
+                **_STRETCH,
                 config={"displaylogo": False, "scrollZoom": True, "responsive": True},
                 key=f"cardan_3d_{selected_kind}_{camera_preset}_{detail_value}_{speed_value}",
             )
@@ -1745,7 +2002,7 @@ else:
                 data=_scene_json(selected_parameters, selected_trajectory, selected_kind),
                 file_name=f"cardan_3d_scene_{selected_kind}.json",
                 mime="application/json",
-                use_container_width=True,
+                **_STRETCH,
                 key=f"download_3d_scene_{selected_kind}",
             )
 
@@ -1757,7 +2014,7 @@ else:
             st.info(text["phase_map_single"])
         else:
             style_figure_for_dark_theme(landscape_figure)
-            st.pyplot(landscape_figure, use_container_width=True)
+            st.pyplot(landscape_figure, **_STRETCH)
             plt.close(landscape_figure)
             st.caption(text["phase_map_note"])
 
@@ -1773,7 +2030,7 @@ else:
         else:
             if st.session_state.excel_export_bytes is None:
                 if download_columns[0].button(
-                    text["prepare_excel"], use_container_width=True, key="prepare_excel_button"
+                    text["prepare_excel"], **_STRETCH, key="prepare_excel_button"
                 ):
                     with st.spinner(text["spinner"]):
                         st.session_state.excel_export_bytes = _excel_workbook(
@@ -1785,20 +2042,20 @@ else:
                     text["export_excel"], data=st.session_state.excel_export_bytes,
                     file_name="Cardan_Engineering_Analysis.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True,
+                    **_STRETCH,
                 )
                 st.caption(text["excel_ready"])
         download_columns[1].download_button(
-            text["export_curves"], data=_curve_csv(analysis, language_code),
-            file_name="cardan_velocity_curves.csv", mime="text/csv", use_container_width=True,
+            text["export_curves"], data=_curve_csv(analyzed_parameters, analysis, language_code),
+            file_name="cardan_velocity_curves.csv", mime="text/csv", **_STRETCH,
         )
         download_columns[2].download_button(
             text["export_summary"], data=_summary_json(analyzed_parameters, analysis),
-            file_name="cardan_analysis_summary.json", mime="application/json", use_container_width=True,
+            file_name="cardan_analysis_summary.json", mime="application/json", **_STRETCH,
         )
         download_columns[3].download_button(
             text["export_trajectory"], data=_trajectory_json(analysis),
-            file_name="cardan_kinematic_trajectory.json", mime="application/json", use_container_width=True,
+            file_name="cardan_kinematic_trajectory.json", mime="application/json", **_STRETCH,
         )
         st.markdown(f"### {text['data_preview']}")
         preview_count = 16
@@ -1813,7 +2070,7 @@ else:
                 _format_ratio(float(x), language_code) for x in analysis["q_optimized_plot"][:preview_count]
             ],
         }
-        st.dataframe(preview, use_container_width=True, hide_index=True)
+        st.dataframe(preview, **_STRETCH, hide_index=True)
 
 with st.expander(text["model_scope"]):
     st.markdown(text["model_text"])
