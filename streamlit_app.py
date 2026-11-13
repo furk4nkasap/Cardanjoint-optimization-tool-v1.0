@@ -975,6 +975,19 @@ def _status_text(value: float, text: dict[str, str]) -> str:
     return text["status_ok"] if value <= UNEVENNESS_LIMIT_PERCENT else text["status_warning"]
 
 
+def _method_short_text(method: str, language_code: str) -> str:
+    """Short method name that fits a metric tile; the full name is its tooltip."""
+
+    turkish = language_code == "tr"
+    return {
+        OptimizationMethod.EXACT.value: "Kapalı-form" if turkish else "Closed-form",
+        OptimizationMethod.GRID.value: "Grid",
+        OptimizationMethod.LOCAL_REFINEMENT.value: "Grid + yerel" if turkish else "Grid + local",
+        OptimizationMethod.DIFFERENTIAL_EVOLUTION.value: "DE",
+        OptimizationMethod.HYBRID.value: "DE + Powell",
+    }.get(method, method)
+
+
 def _method_text(method: str, text: dict[str, str]) -> str:
     return {
         OptimizationMethod.GRID.value: text["method_grid"],
@@ -1744,7 +1757,10 @@ else:
             phase_columns = st.columns(3)
             phase_columns[0].metric(text["optimum_phi1"], _format_degree(result.phi1_deg, language_code))
             phase_columns[1].metric(text["optimum_phi2"], _format_degree(result.phi2_deg, language_code))
-            phase_columns[2].metric(text["analysis_mode"], display_mode)
+            phase_columns[2].metric(
+                text["analysis_mode"], _method_short_text(result.method, language_code),
+                help=display_mode,
+            )
             st.button(
                 text["apply_optimum"], type="primary", on_click=_apply_optimum,
                 **_STRETCH, disabled=stale_results,

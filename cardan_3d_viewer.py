@@ -331,6 +331,10 @@ def build_kinematic_3d_figure(
         col=2,
     )
 
+    # The schematic note is the second line of the title.  As a paper annotation
+    # below the plot it collided with the Play/Pause buttons and the slider.
+    note_line = f"<br><sup>{viewer_labels.schematic_note}</sup>"
+
     indices = _sample_indices(selected_trajectory.input_rotation_deg.size, frame_count)
     animation_frames = []
     for display_index, source_index in enumerate(indices):
@@ -367,7 +371,7 @@ def build_kinematic_3d_figure(
                     title={
                         "text": (
                             f"{viewer_labels.title} — θ = {theta_value:.1f}°, "
-                            f"q = {q_value:.5f}"
+                            f"q = {q_value:.5f}{note_line}"
                         )
                     }
                 ),
@@ -400,11 +404,12 @@ def build_kinematic_3d_figure(
             "text": (
                 f"{viewer_labels.title} — "
                 f"{viewer_labels.selected_optimized if selected_kind == 'optimized' else viewer_labels.selected_current}"
+                f"{note_line}"
             ),
             "x": 0.02,
         },
         height=690,
-        margin={"l": 0, "r": 0, "t": 70, "b": 30},
+        margin={"l": 0, "r": 0, "t": 86, "b": 30},
         paper_bgcolor="#0E1117",
         plot_bgcolor="#111827",
         font={"color": "#F3F4F6"},
@@ -469,15 +474,6 @@ def build_kinematic_3d_figure(
             "x": 0.17,
             "len": 0.80,
             "y": -0.045,
-        }],
-        annotations=[{
-            "text": viewer_labels.schematic_note,
-            "xref": "paper",
-            "yref": "paper",
-            "x": 0.01,
-            "y": -0.15,
-            "showarrow": False,
-            "font": {"size": 11, "color": "#AEB6C2"},
         }],
     )
     return figure
