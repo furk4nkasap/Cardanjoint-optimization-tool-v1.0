@@ -2,7 +2,7 @@
 
 Interactive engineering application for the **kinematic analysis, physical yoke-phase optimization, visualization, validation, and export** of single, double, and triple Cardan (Hooke universal-joint) systems.
 
-![Version](https://img.shields.io/badge/version-1.5.0-informational.svg)
+![Version](https://img.shields.io/badge/version-1.5.1-informational.svg)
 ![Python](https://img.shields.io/badge/Python-3.x-blue.svg)
 ![Interface](https://img.shields.io/badge/Interface-Streamlit-success.svg)
 ![Optimization](https://img.shields.io/badge/Optimization-Closed--form%20%7C%20Grid%20%7C%20DE%20%7C%20Powell-orange.svg)

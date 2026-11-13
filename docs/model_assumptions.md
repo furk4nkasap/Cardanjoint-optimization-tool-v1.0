@@ -81,12 +81,16 @@ verir. Sağ taraf pozitifse sabit hız hiçbir faz seçimiyle elde edilemez ve `
 
 Bulunan optimum bu sınıra `1e-7` yüzde puanı içinde ulaşıyorsa küresel optimum olduğu, aramadan bağımsız olarak kanıtlanmış olur (`ExactOptimum.certified_global`).
 
-Sınıra her zaman ulaşılabildiği genel olarak kanıtlanmamıştır; 150 rastgele üçlüde ve 40 rastgele çiftte sayısal olarak ulaşılmıştır. Ulaşılamazsa `certified_global = False` döner ve arayüz bunu açıkça yazar.
+**Sınıra ulaşılabilirlik (v1.5.1):** Üç mafsal için sınıra her zaman ulaşıldığı yapıcı olarak kanıtlıdır. İlk iki mafsalın bileşik anizotropisi `t`, hiperbolik kosinüs bağıntısına uyar:
+
+`cosh t = cosh w₁ cosh w₂ + sinh w₁ sinh w₂ cos(2a₁)`, `w_i = −ln cos β_i`
+
+Dolayısıyla birinci faz `t`'yi `[|w₁ − w₂|, w₁ + w₂]` aralığındaki her değere ayarlayabilir. `t`, bu aralıkta `w₃`'e en yakın değer seçilir; ikinci faz ilk iki mafsalın büyük eksenini üçüncü mafsalın sıkıştırdığı eksene döndürür. Kalan anizotropi `|t − w₃|` olur ve bu tam olarak alt sınırdır. Bu yapı ve kanıt, v1.5.0'ın bağımsız denetiminden alınmıştır; burada yeniden uygulanmış ve 508 durumda (alt sınırdan en çok 6e-12 pu sapma) ile bağıntının kendisi 2000 örnekte (4e-15) sayısal olarak sınanmıştır. Kayan nokta nedeniyle sınıra `1e-7` pu içinde ulaşılamazsa `certified_global = False` döner.
 
 ### 6.3 Optimum
 
 - **Çift mafsal:** Optimum her zaman `φ = 0°` (hizalı çatallar), kalan düzgünsüzlük `κ = cos β_küçük / cos β_büyük` ile belirlenir.
-- **Üçlü mafsal:** `s₁ − s₂ = 0` iki bilinmeyenli iki denklemdir. Kapalı-form ızgaranın en iyi düğümlerinden başlayan Levenberg–Marquardt çözümü kullanılır; alt sınıra ulaşıldığında arama durur.
+- **Üçlü mafsal (v1.5.1):** Optimum yukarıdaki yapıyla aramasız kurulur (`_constructive_triple_phases_deg`). Levenberg–Marquardt araması yalnızca yapı alt sınıra ulaşamazsa devreye giren yedek yoldur.
 - Ayna görüntüsü optimumlar eşdeğerdir; hangisinin döneceği deterministiktir ama fiziksel bir tercih ifade etmez.
 
 ### 6.4 Kaynak durumu
@@ -105,6 +109,6 @@ Bu türetim taranan kaynakların erişilebilen kısımlarında bulunamadı (bkz.
 |---|---|
 | β ≤ 60° (arayüz sınırı) | Örneklenmiş ve kapalı-form sonuçlar uyumlu |
 | 60° < β < 90° (yalnızca Python API) | Kapalı-form değerler doğru; örneklenmiş amaç ve grid tabanlı yöntemler güvenilir değil |
-| β → 90° | Tekil; `ZeroDivisionError` veya `ValueError` |
+| β → 90° | Hız oranı çıkarma hatası olmadan hesaplanır (v1.5.1); değerler çok büyür ve mekanik anlam taşımaz. β ≥ 90° `ValueError` |
 | Sonlu olmayan girdiler | Kurulumda `ValueError` |
 | Düzlemsel olmayan üçlü sistem | Model dışı |

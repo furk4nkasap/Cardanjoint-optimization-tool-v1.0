@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.5.1 — Independent Audit Fixes
+
+v1.5.0'ın bağımsız bir denetiminde bulunan altı kusur giderildi; her biri önce bu sürümde yeniden üretildi.
+
+- Düzeltme: yerel inceltme ızgarası artık her zaman kendi merkezini içerir. Adım pencereyi bölmediğinde (ör. kaba 1,5°/2,5° ile yerel 1,0°) inceltme, kaba sonuçtan kötü çıkabiliyordu (%0 yerine %0,50).
+- Düzeltme: yörüngede devirler artık `np.unwrap` ile değil, giriş açısına göre korunur; seyrek açı dizilerinde devir kaybı olmaz.
+- Düzeltme: `hooke_speed_ratio*` ve `hooke_output_angle_rad` geçersiz β (negatif, ≥ 90°, NaN) ve sonlu olmayan açıları reddeder; `OptimizationSettings` sonlu olmayan tolerans ve adımı reddeder.
+- Düzeltme: hız oranı paydası çıkarma hatası olmayan eşdeğer biçimde hesaplanır; β → 90° yakınında `ZeroDivisionError` yerine doğru değer döner.
+- Düzeltme: hibrit yöntemde Powell'ın başarısı yalnızca döndürdüğü nokta tutulan noktadan kötü değilse rapora yansır.
+- Düzeltme: sürekli yöntemlerde fonksiyon değerlendirme sayısı gerçek çağrı sayısıdır.
+- Düzeltme: yerel ızgara 180,0° (0° ile aynı faz) üretmez.
+- Üçlü mafsalda kapalı-form optimum artık aramasız kurulur (hiperbolik kosinüs bağıntısı ve SVD); alt sınıra ulaşıldığı kanıtlıdır. Arama yalnızca yedek yol olarak durur.
+- Sonuç değişiklikleri: 9,5°/9,5°/9,5° yerel inceltme örneği (30°, 30°) yerine ayna eşdeğeri (150°, 150°) seçebilir, düzgünsüzlük aynıdır; hibritte "başarı" oranı düşer (daha dürüst rapor); `θ₀ > 180°` için dışa aktarılan çıkış açıları 360°'nin katı kadar kayar.
+
 ## v1.5.0 — Maintenance & Robustness
 
 - Arayüz: "Ultra hassas optimizasyon" kutusu kaldırıldı; standart analiz zaten kanıtlanmış küresel optimumu veriyor. Grid, yerel inceltme, DE ve hibrit yöntemler uzman modunda seçilebilir.

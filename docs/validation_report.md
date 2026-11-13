@@ -208,3 +208,33 @@ Fischer ve Paul (1991) ile Seherr-Thoss ve diğ. (2006) tam metinleri okundu. Ka
 | Önbellek sınırı | `max_entries=128` (kayıt başına ~147 KB → en çok ~19 MB) | — |
 
 Doğrulanmayanlar: `width` geçişi yalnızca Streamlit 1.67 ile çalıştırıldı; 1.51'den eski sürümlerdeki yedek yol çalıştırılarak denenmedi.
+
+## 11. Güncelleme — v1.5.1 (bağımsız denetim bulguları)
+
+v1.5.0, ayrı bir çalışmada bağımsız olarak denetlendi. Denetimin kendi kodu burada çalıştırılmadı; her bulgu bu depodaki kod üzerinde yeniden üretildi, düzeltildi ve teste bağlandı (`tests/test_audit_findings.py`).
+
+| Bulgu | v1.5.0'da yeniden üretim | Düzeltme sonrası |
+|---|---|---|
+| Yerel inceltme kaba optimumu kaybediyor | Eşit 30° çift mafsal; kaba 1,5° veya 2,5°, yerel 1,0°: U = %0 → %0,5038. Kaba 5°, yerel 0,3°: %0,1008 | U = %0, φ = 0° |
+| Seyrek dizide devir kaybı | `[0, 360, 720]`, θ₀ = 720°: çıkış ≈ `[0, 0, 0]` | `[720, 1080, 1440]` |
+| Alt düzey β denetimi yok | β = −10°, 90°, 100°, NaN sonuç döndürüyor | `ValueError` |
+| β → 90° çıkarma hatası | β = 89,99999°, θ = 0: `ZeroDivisionError` | 1/cos β = 5 729 577,95 (bağıl 1e-9) |
+| Hibritte yanıltıcı başarı bayrağı | Reddedilen Powell adayı `success = True` yapıyor | Yalnızca nokta kötü değilse aktarılır |
+| Eksik değerlendirme sayısı | Çözücünün beyanı kullanılıyor | Gerçek çağrı sayısı |
+
+Yeni testlerden 23'ü v1.5.0'da başarısızdı; düzeltmeden sonra tamamı geçiyor.
+
+**Aramasız üçlü optimum.** Denetimin önerdiği yapı burada yeniden uygulandı. 508 durumda alt sınırdan en çok 6e-12 pu sapıyor ve önceki arama tabanlı çözümle aynı sonucu veriyor; çözücü süresi 0,97 ms'den 0,08 ms'ye iniyor. Alt sınıra ulaşılabilirlik artık kanıtlı (bkz. `docs/model_assumptions.md`, Bölüm 6.2).
+
+**Değişen sonuçlar.**
+
+| Konu | v1.5.0 | v1.5.1 |
+|---|---|---|
+| 150 senaryoda yöntemlerin optimuma uzaklığı | — | Aynı (grid en kötü 7,04; yerel 0,866; DE/hibrit 1,3e-3; kapalı-form 0) |
+| Hibrit "başarı" oranı (150 senaryo) | %100 | %83 |
+| Kapalı-form yöntemde değerlendirme sayısı | 2600 | 1297 (1296'sı korunan harita ızgarası) |
+| 9,5° üçlü, yerel inceltme | (30°, 30°) | (30°, 30°) veya ayna eşdeğeri (150°, 150°); U aynı |
+
+`python -m pytest tests` → 379 test, tamamı geçti.
+
+Kalan sınır: `reduction_percent` negatif iyileşmeyi sıfıra kırpar. Yukarıdaki düzeltmelerden sonra bilinen bir kötüleşme yolu kalmadı, ancak ileride ortaya çıkacak bir gerilemeyi bu gösterim gizleyebilir.

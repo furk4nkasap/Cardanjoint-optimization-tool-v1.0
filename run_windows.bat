@@ -2,7 +2,7 @@
 setlocal
 cd /d "%~dp0"
 
-echo Starting Cardan Joint Engineering Tool v1.5.0...
+echo Starting Cardan Joint Engineering Tool v1.5.1...
 where py >nul 2>&1
 if %errorlevel%==0 (
     py -m streamlit run streamlit_app.py

@@ -24,7 +24,7 @@ from scipy.optimize import differential_evolution, least_squares, minimize
 # Public release and API contract. Every public phase value uses physical yoke
 # clocking: 0 deg = aligned yokes on the shared shaft and 90 deg = perpendicular
 # yokes. The analytical Hooke-equation reference is private to this module.
-TOOL_VERSION = "1.5.0"
+TOOL_VERSION = "1.5.1"
 CORE_API_VERSION = 10
 PARAMETER_SCHEMA_VERSION = 2
 ANGLE_UNIT = "degree"
@@ -128,6 +128,13 @@ class OptimizationSettings:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "method", OptimizationMethod(self.method))
+        for name in (
+            "local_refinement_step_deg",
+            "differential_evolution_tolerance",
+            "differential_evolution_absolute_tolerance",
+        ):
+            if not math.isfinite(float(getattr(self, name))):
+                raise ValueError(f"{name} must be a finite number.")
         if not 0.0 < float(self.local_refinement_step_deg) <= 30.0:
             raise ValueError("Local refinement step must satisfy 0 < step <= 30 degrees.")
         if int(self.differential_evolution_max_iterations) < 1:
@@ -465,18 +472,30 @@ C_RING_LINEWIDTH = 6.0
 C_RING_HALF_GAP_DEG = 45.0
 
 
+def _validated_beta_rad(beta_rad: float) -> float:
+    beta = float(beta_rad)
+    if not math.isfinite(beta) or not 0.0 <= beta < 0.5 * math.pi:
+        raise ValueError("beta must satisfy 0 <= beta < 90 degrees.")
+    return beta
+
+
+def _validated_theta_rad(theta_rad: ArrayLike) -> NDArray[np.float64]:
+    theta = np.asarray(theta_rad, dtype=float)
+    if not np.all(np.isfinite(theta)):
+        raise ValueError("Shaft angles must be finite.")
+    return theta
+
+
 def hooke_speed_ratio_rad(
     theta_rad: ArrayLike,
     beta_rad: float,
 ) -> NDArray[np.float64]:
-    theta = np.asarray(theta_rad, dtype=float)
-    beta = float(beta_rad)
-    denominator = 1.0 - np.sin(beta) ** 2 * np.cos(theta) ** 2
-
-    if np.any(np.abs(denominator) < EPSILON):
-        raise ZeroDivisionError("Hooke-joint speed-ratio denominator is too small.")
-
-    return np.asarray(np.cos(beta) / denominator, dtype=float)
+    theta = _validated_theta_rad(theta_rad)
+    cos_beta = math.cos(_validated_beta_rad(beta_rad))
+    # sin^2(theta) + cos^2(beta) cos^2(theta) equals 1 - sin^2(beta) cos^2(theta)
+    # but has no cancellation close to beta = 90 deg, theta = 0.
+    denominator = np.sin(theta) ** 2 + (cos_beta * np.cos(theta)) ** 2
+    return np.asarray(cos_beta / denominator, dtype=float)
 
 
 def hooke_speed_ratio(
@@ -495,12 +514,8 @@ def hooke_output_angle_rad(
 ) -> NDArray[np.float64]:
     """Return the quadrant-preserving Hooke-joint output angle."""
 
-    theta_in = np.asarray(theta_in_rad, dtype=float)
-    cos_beta = np.cos(float(beta_rad))
-
-    if abs(cos_beta) < EPSILON:
-        raise ValueError("A beta angle at or near 90 degrees is singular.")
-
+    theta_in = _validated_theta_rad(theta_in_rad)
+    cos_beta = math.cos(_validated_beta_rad(beta_rad))
     return np.arctan2(
         np.sin(theta_in),
         cos_beta * np.cos(theta_in),
@@ -623,15 +638,64 @@ def reduction_percent(current_percent: float, optimized_percent: float) -> float
     return float(max(0.0, 100.0 * (current - optimized) / current))
 
 
+def _constructive_triple_phases_deg(betas_deg: tuple[float, ...]) -> tuple[float, float]:
+    """Physical phases of a global optimum for three joints, without a search.
+
+    With w_i = -ln(cos(beta_i)) the anisotropy t of the first two joints obeys
+    the hyperbolic law of cosines
+
+        cosh t = cosh w1 cosh w2 + sinh w1 sinh w2 cos(2 a1),
+
+    so the first phase can set t to any value in [|w1 - w2|, w1 + w2].  t is
+    chosen as close to w3 as that interval allows, and the second phase turns
+    the major axis of the first two joints onto the axis the third joint
+    compresses.  The remaining anisotropy is |t - w3|, which equals the lower
+    bound max(0, 2 max(w) - sum(w)).  The construction and its proof were
+    contributed by an independent audit of v1.5.0; see docs/model_assumptions.md.
+    """
+
+    beta = np.deg2rad(np.asarray(betas_deg, dtype=float))
+    # log1p keeps small angles accurate, where cos(beta) rounds to 1.
+    w = -np.log1p(-2.0 * np.sin(0.5 * beta) ** 2)
+    target = float(np.clip(w[2], abs(w[0] - w[1]), w[0] + w[1]))
+    if w[0] == 0.0 or w[1] == 0.0:
+        first = 0.0
+    else:
+        delta = float(w[0] - w[1])
+        # cosh(target) - cosh(delta) written as a product: no cancellation.
+        cos_double = (
+            2.0 * math.sinh(0.5 * (target + delta)) * math.sinh(0.5 * (target - delta))
+            / (math.sinh(float(w[0])) * math.sinh(float(w[1])))
+            - 1.0
+        )
+        first = 0.5 * math.acos(min(1.0, max(-1.0, cos_double)))
+    cosine, sine = math.cos(first), math.sin(first)
+    # In this helper the joint acts as diag(cos(beta), 1) on (cos, sin).
+    pair = (
+        np.diag([math.cos(beta[1]), 1.0])
+        @ np.array([[cosine, -sine], [sine, cosine]])
+        @ np.diag([math.cos(beta[0]), 1.0])
+    )
+    left, _, _ = np.linalg.svd(pair)
+    second = -math.atan2(left[1, 0], left[0, 0])
+    phases = []
+    for angle in (first, second):
+        phase = (math.degrees(angle) + 90.0) % KINEMATIC_PERIOD_DEG
+        if phase < 1.0e-9 or KINEMATIC_PERIOD_DEG - phase < 1.0e-9:
+            phase = 0.0
+        phases.append(float(phase))
+    return phases[0], phases[1]
+
+
 def exact_phase_optimum(parameters: CardanParameters) -> ExactOptimum:
     """Minimise the closed-form unevenness over the physical yoke phases.
 
     Double joint: aligned yokes (phi = 0) are always optimal in the planar
     model, with residual kappa = cos(beta_small) / cos(beta_large).
-    Triple joint: U is a monotone function of the squared Frobenius norm of
-    the composite map, a smooth trigonometric polynomial of the two phases;
-    s1 - s2 is minimised as a two-equation least-squares problem
-    (Levenberg-Marquardt) from the best nodes of a closed-form grid.
+    Triple joint: the optimum is constructed without a search (see
+    ``_constructive_triple_phases_deg``).  It attains the rigorous lower
+    bound, which proves that it is global.  A Levenberg-Marquardt search on
+    the closed-form objective remains as a fallback.
     """
 
     lower_bound = minimum_unevenness_lower_bound_percent(parameters)
@@ -644,6 +708,13 @@ def exact_phase_optimum(parameters: CardanParameters) -> ExactOptimum:
         certified = value <= lower_bound + OPTIMALITY_TOLERANCE_PERCENT
         return ExactOptimum(0.0, None, value, lower_bound, bool(certified), 1)
 
+    constructive = _constructive_triple_phases_deg(parameters.active_betas)
+    value = float(exact_unevenness_grid(parameters, constructive[0], constructive[1]))
+    if value <= lower_bound + OPTIMALITY_TOLERANCE_PERCENT:
+        return ExactOptimum(constructive[0], constructive[1], value, lower_bound, True, 1)
+
+    # Fallback, not reached in the supported range: numerical search on the
+    # closed-form objective (kept in case the construction loses precision).
     cos_betas = _cos_betas(parameters)
 
     def residual(model_phases_rad: ArrayLike) -> NDArray[np.float64]:
@@ -949,10 +1020,14 @@ def calculate_kinematic_trajectory(
     joint_ratios: list[NDArray[np.float64]] = []
 
     for joint_index, beta_rad in enumerate(betas_rad):
-        joint_inputs.append(np.rad2deg(np.unwrap(theta_in_rad)))
+        joint_inputs.append(np.rad2deg(theta_in_rad))
         q_joint = hooke_speed_ratio_rad(theta_in_rad, float(beta_rad))
-        theta_out_rad = hooke_output_angle_rad(theta_in_rad, float(beta_rad))
-        joint_outputs.append(np.rad2deg(np.unwrap(theta_out_rad)))
+        # A Hooke joint leads or lags by less than 90 deg, so the output is the
+        # input plus the wrapped difference.  Unlike np.unwrap this does not
+        # depend on the sampling and keeps whole revolutions on sparse grids.
+        difference = hooke_output_angle_rad(theta_in_rad, float(beta_rad)) - theta_in_rad
+        theta_out_rad = theta_in_rad + np.arctan2(np.sin(difference), np.cos(difference))
+        joint_outputs.append(np.rad2deg(theta_out_rad))
         joint_ratios.append(np.asarray(q_joint, dtype=float))
 
         if joint_index < phases_model_rad.size:
@@ -1437,8 +1512,12 @@ def _periodic_local_grid(
         float(step_deg),
         dtype=float,
     )
-    normalized = canonical_phase_deg(raw)
-    return np.unique(np.round(normalized, decimals=10))
+    # A step that does not divide the half-width would skip the centre, and the
+    # refinement could then be worse than the candidate it started from.
+    normalized = canonical_phase_deg(np.append(raw, float(center_deg)))
+    # Rounding can turn 179.99999999999 into 180.0, which is the same phase as 0.
+    rounded = np.mod(np.round(normalized, decimals=10), KINEMATIC_PERIOD_DEG)
+    return np.unique(rounded)
 
 
 # A local-refinement window never uses more than this many nodes per phase
@@ -1618,7 +1697,16 @@ def optimize_continuous_phase(
         raise ValueError("Continuous phase optimization requires at least two joints.")
 
     theta_deg = np.asarray(theta_grid_deg, dtype=float)
-    objective = _build_continuous_objective(parameters, theta_deg)
+    raw_objective = _build_continuous_objective(parameters, theta_deg)
+    objective_calls = 0
+
+    def objective(candidate: ArrayLike) -> float:
+        # Counts every evaluation, including the driver's own comparisons,
+        # instead of trusting the numbers reported by the solvers.
+        nonlocal objective_calls
+        objective_calls += 1
+        return raw_objective(candidate)
+
     bounds = [(0.0, KINEMATIC_PERIOD_DEG)] * (1 if parameters.mode is CardanMode.DOUBLE else 2)
     x0 = _phase_vector_from_result(coarse_result)
     started = perf_counter()
@@ -1641,7 +1729,6 @@ def optimize_continuous_phase(
 
     best_vector = canonical_phase_deg(de_result.x)
     best_value = float(objective(best_vector))
-    function_evaluations = int(de_result.nfev)
     iterations = int(de_result.nit)
     success = bool(de_result.success)
     messages = [f"Differential evolution: {de_result.message}"]
@@ -1666,14 +1753,16 @@ def optimize_continuous_phase(
                 "disp": False,
             },
         )
-        function_evaluations += int(getattr(powell_result, "nfev", 0))
         iterations += int(getattr(powell_result, "nit", 0))
         powell_vector = canonical_phase_deg(powell_result.x)
         powell_value = float(objective(powell_vector))
+        # Powell's convergence only says something about the returned point
+        # if that point is at least as good as the one that is kept.
+        if powell_value <= best_value:
+            success = bool(powell_result.success)
         if powell_value < best_value:
             best_vector = powell_vector
             best_value = powell_value
-        success = success or bool(powell_result.success)
         messages.append(f"Powell polishing: {powell_result.message}")
 
     method = settings.method
@@ -1689,7 +1778,7 @@ def optimize_continuous_phase(
         method=method.value,
         success=success,
         message=" ".join(messages),
-        function_evaluations=function_evaluations,
+        function_evaluations=int(objective_calls),
         iterations=iterations,
         elapsed_seconds=float(elapsed),
         objective_unevenness_percent=float(result.unevenness_percent),

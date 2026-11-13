@@ -1,4 +1,4 @@
-"""Beginner-friendly Streamlit interface for Cardan Joint Engineering Tool v1.5.0."""
+"""Beginner-friendly Streamlit interface for Cardan Joint Engineering Tool v1.5.1."""
 
 from __future__ import annotations
 
@@ -107,12 +107,12 @@ PlotLabels = core.PlotLabels
 UNEVENNESS_LIMIT_PERCENT = core.UNEVENNESS_LIMIT_PERCENT
 
 
-APP_RELEASE = "1.5.0"
+APP_RELEASE = "1.5.1"
 PHYSICAL_PHASE_CONVENTION_VERSION = 1
 
 
 st.set_page_config(
-    page_title="Cardan Joint Engineering Tool v1.5.0",
+    page_title="Cardan Joint Engineering Tool v1.5.1",
     page_icon="⚙️",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -123,7 +123,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "en": {
         "title": "Cardan Joint Engineering Tool",
         "subtitle": "Kinematic analysis, phase optimization, interactive 3D visualization, validation, and export",
-        "version": "Version 1.5.0",
+        "version": "Version 1.5.1",
         "system_parameters": "System Parameters",
         "configuration": "Cardan configuration",
         "mode_single": "1 Cardan — Single",
@@ -239,7 +239,7 @@ The current model is **kinematic only**. Mass, inertia, torque, bearing reaction
     "tr": {
         "title": "Kardan Mafsalı Mühendislik Aracı",
         "subtitle": "Kinematik analiz, faz optimizasyonu, etkileşimli 3B görselleştirme, doğrulama ve dışa aktarma",
-        "version": "Sürüm 1.5.0",
+        "version": "Sürüm 1.5.1",
         "system_parameters": "Sistem Parametreleri",
         "configuration": "Kardan konfigürasyonu",
         "mode_single": "1 Kardan — Tekli",
@@ -356,7 +356,7 @@ Mevcut model **yalnızca kinematiktir**. Kütle, atalet, tork, yatak tepkileri, 
 
 
 TRANSLATIONS["en"].update({
-    "version": "Version 1.5.0",
+    "version": "Version 1.5.1",
     "language": "Language / Dil",
     "language_english": "English",
     "language_turkish": "Türkçe",
@@ -434,7 +434,7 @@ TRANSLATIONS["en"].update({
 })
 
 TRANSLATIONS["tr"].update({
-    "version": "Sürüm 1.5.0",
+    "version": "Sürüm 1.5.1",
     "language": "Dil / Language",
     "language_english": "English",
     "language_turkish": "Türkçe",

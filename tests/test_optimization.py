@@ -107,7 +107,10 @@ def test_legacy_regression_value_of_local_refinement_is_unchanged():
         P(mode=3, beta1_deg=9.5, beta2_deg=9.5, beta3_deg=9.5), refine=True
     )
     result = analysis["optimization_result"]
-    assert (result.phi1_deg, result.phi2_deg) == (30.0, 30.0)
+    # (30, 30) and its mirror image (150, 150) are the same optimum; which one
+    # wins the tie depends on round-off (it changed with the cancellation-free
+    # denominator of v1.5.1).  The unevenness itself is checked tightly below.
+    assert (result.phi1_deg, result.phi2_deg) in {(30.0, 30.0), (150.0, 150.0)}
     assert analysis["optimized_metrics"].unevenness_percent == pytest.approx(
         0.000131672855774, rel=1e-9
     )

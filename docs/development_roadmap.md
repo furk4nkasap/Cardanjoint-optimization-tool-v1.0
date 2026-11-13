@@ -55,3 +55,10 @@ Model hiçbir deneysel veriyle karşılaştırılmadı. En düşük eforlu seçe
 - **Tamamlandı (Kısa vade 3, 4, 5, 6 ve Orta vade 12):** CSV üst bilgi sütunları, `width` geçişi, önbellek sınırı, aşamalı yerel inceltme, Ultra kutusunun kaldırılması (yöntemler uzman modunda).
 - **Açık kalan kısa işler:** açı sapması genliğinin arayüzde gösterilmesi; An ve Wang (2017) ile Gao ve Qi (2023) tam metinlerinin okunması.
 - **Sıradaki aşama:** Aşama 3 — üçlü sistemde uzaysal geometri ve alt sınıra ulaşılabilirliğin analitik kanıtı.
+
+## Durum güncellemesi — v1.5.1
+
+- **Tamamlandı (Orta vade 11):** alt sınıra ulaşılabilirliğin kanıtı. Bağımsız denetimin yapıcı çözümü çekirdeğe alındı.
+- **Tamamlandı:** denetimin bulduğu altı kusur.
+- **Açık:** `reduction_percent` gösteriminin kötüleşmeyi gizleyebilmesi; açı sapması genliğinin arayüzde gösterilmesi; iki açık erişimli makalenin okunması.
+- **Sıradaki aşama:** Aşama 3 — üçlü sistemde uzaysal geometri.
